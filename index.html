@@ -1,411 +1,443 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Doodly</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='11' cy='13' r='2.5' fill='white' transform='rotate(-20 11 13)'/><circle cx='21' cy='11' r='2.5' fill='white' transform='rotate(15 21 11)'/><path d='M10 21 Q16 28 24 22' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'/></svg>">
-  <style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Doodly</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='11' cy='13' r='2.5' fill='white' transform='rotate(-20 11 13)'/><circle cx='21' cy='11' r='2.5' fill='white' transform='rotate(15 21 11)'/><path d='M10 21 Q16 28 24 22' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'/></svg>">
+<style>
 :root {
-  --bg: #111113;
-  --surface: #1a1a1e;
-  --surface2: #222228;
-  --border: #2e2e38;
-  --text: #e8e8f0;
-  --text-dim: #888899;
-  --accent: #7c6dff;
-  --accent2: #ff6b6b;
-  --btn-bg: #252530;
-  --btn-hover: #2e2e3e;
-  --btn-active: #3a3a50;
-  --radius-sm: 6px;
-  --radius: 10px;
-  --radius-lg: 14px;
-  --panel-w: 280px;
-  --toolbar-h: 56px;
-  --trans: 0.15s ease;
-  --ui-font-size: 13px;
+--bg: #111113;
+--surface: #1a1a1e;
+--surface2: #222228;
+--border: #2e2e38;
+--text: #e8e8f0;
+--text-dim: #888899;
+--accent: #7c6dff;
+--accent2: #ff6b6b;
+--btn-bg: #252530;
+--btn-hover: #2e2e3e;
+--btn-active: #3a3a50;
+--radius-sm: 6px;
+--radius: 10px;
+--radius-lg: 14px;
+--panel-w: 280px;
+--toolbar-h: 56px;
+--trans: 0.15s ease;
+--ui-font-size: 13px;
+}
+@media (max-width: 700px) {
+:root { --toolbar-h: 48px; --ui-font-size: 12px; }
 }
 *, *::before, *::after { box-sizing: border-box; }
 html, body {
-  width: 100%; height: 100%; margin: 0;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  background: var(--bg); color: var(--text);
-  touch-action: none; user-select: none; overflow: hidden;
+width: 100%; height: 100%; margin: 0;
+font-family: 'Segoe UI', system-ui, sans-serif;
+background: var(--bg); color: var(--text);
+touch-action: none; user-select: none; overflow: hidden;
+-webkit-tap-highlight-color: transparent;
 }
 canvas { touch-action: none; user-select: none; display: block; }
 #toolbar {
-  position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
-  height: var(--toolbar-h); background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); display: flex; align-items: center; gap: 2px;
-  padding: 0 8px; box-shadow: 0 8px 32px #0009; z-index: 1000;
+position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+height: var(--toolbar-h); background: var(--surface); border: 1px solid var(--border);
+border-radius: var(--radius-lg); display: flex; align-items: center; gap: 2px;
+padding: 0 8px; box-shadow: 0 8px 32px #0009; z-index: 1000;
+max-width: calc(100vw - 16px); overflow-x: auto; overflow-y: hidden;
+scrollbar-width: none;
 }
+#toolbar::-webkit-scrollbar { display: none; }
 .tb-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; flex-shrink: 0; }
 .tb-btn {
-  width: 38px; height: 38px; border-radius: var(--radius-sm);
-  background: transparent; border: none; color: var(--text); cursor: pointer;
-  font-size: var(--ui-font-size); display: flex; align-items: center; justify-content: center;
-  transition: background var(--trans), color var(--trans); flex-shrink: 0; position: relative;
+width: 38px; height: 38px; border-radius: var(--radius-sm);
+background: transparent; border: none; color: var(--text); cursor: pointer;
+font-size: var(--ui-font-size); display: flex; align-items: center; justify-content: center;
+transition: background var(--trans), color var(--trans); flex-shrink: 0; position: relative;
 }
 .tb-btn:hover { background: var(--btn-hover); }
 .tb-btn.active { background: var(--btn-active); color: var(--accent); }
 .tb-btn svg { width: 18px; height: 18px; pointer-events: none; }
 .color-dot-wrap { position: relative; display: flex; align-items: center; }
 .color-dot {
-  width: 38px; height: 38px; border-radius: var(--radius-sm);
-  background: transparent; border: none; cursor: pointer; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  transition: background var(--trans);
+width: 38px; height: 38px; border-radius: var(--radius-sm);
+background: transparent; border: none; cursor: pointer; flex-shrink: 0;
+display: flex; align-items: center; justify-content: center;
+transition: background var(--trans);
 }
 .color-dot:hover { background: var(--btn-hover); }
 .color-dot-circle {
-  width: 18px; height: 18px; border-radius: 50%;
-  pointer-events: none; flex-shrink: 0;
+width: 18px; height: 18px; border-radius: 50%;
+pointer-events: none; flex-shrink: 0;
 }
 .color-strip-palette {
-  position: fixed;
-  left: 50%; transform: translateX(-50%) translateY(-8px);
-  height: var(--toolbar-h);
-  background: transparent; border: none;
-  border-radius: var(--radius-lg);
-  display: flex; flex-direction: row; overflow: hidden;
-  box-shadow: 0 8px 32px #0009; z-index: 999;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+position: fixed;
+left: 50%; transform: translateX(-50%) translateY(-8px);
+height: var(--toolbar-h);
+background: transparent; border: none;
+border-radius: var(--radius-lg);
+display: flex; flex-direction: row; overflow: hidden;
+box-shadow: 0 8px 32px #0009; z-index: 999;
+opacity: 0; pointer-events: none;
+transition: opacity 0.18s ease, transform 0.18s ease;
 }
 .color-strip-palette.open {
-  opacity: 1; pointer-events: auto;
-  transform: translateX(-50%) translateY(0);
+opacity: 1; pointer-events: auto;
+transform: translateX(-50%) translateY(0);
 }
 .strip-swatch {
-  flex: 1; min-width: 0; height: 100%; cursor: pointer;
-  border: none; outline: none; position: relative;
-  transition: flex 0.12s ease;
+flex: 1; min-width: 0; height: 100%; cursor: pointer;
+border: none; outline: none; position: relative;
+transition: flex 0.12s ease;
 }
 .strip-swatch:hover { flex: 1.6; z-index: 1; }
 .strip-swatch:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
-.strip-swatch:last-child  { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+.strip-swatch:last-child{ border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
 #brushSizeWrap { display: flex; align-items: center; padding: 0 2px; }
 #layersPanel {
-  position: fixed; top: 12px; right: 12px; width: var(--panel-w);
-  max-height: calc(100vh - 24px); background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); display: flex; flex-direction: column;
-  z-index: 999; box-shadow: 0 8px 32px #0009; overflow: hidden;
+position: fixed; top: 12px; right: 12px; width: var(--panel-w);
+max-height: calc(100vh - 24px); background: var(--surface); border: 1px solid var(--border);
+border-radius: var(--radius-lg); display: flex; flex-direction: column;
+z-index: 999; box-shadow: 0 8px 32px #0009; overflow: hidden;
+transition: transform 0.22s ease, opacity 0.22s ease;
+}
+@media (max-width: 700px) {
+#layersPanel {
+top: auto; bottom: 0; right: 0; left: 0; width: 100%;
+max-height: 55vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+transform: translateY(100%); opacity: 0; pointer-events: none;
+}
+#layersPanel.mobile-open {
+transform: translateY(0); opacity: 1; pointer-events: auto;
+}
+#layersToggleBtn {
+display: flex !important;
+}
+}
+#layersToggleBtn {
+display: none;
+position: fixed; bottom: 16px; right: 16px;
+width: 46px; height: 46px; border-radius: 50%;
+background: var(--surface); border: 1px solid var(--border);
+color: var(--text); cursor: pointer; z-index: 1001;
+align-items: center; justify-content: center;
+box-shadow: 0 4px 16px #0008;
+transition: background var(--trans);
+}
+#layersToggleBtn:hover { background: var(--btn-hover); }
+#layersPanelOverlay {
+display: none; position: fixed; inset: 0; z-index: 998; background: transparent;
+}
+@media (max-width: 700px) {
+#layersPanelOverlay.active { display: block; }
 }
 #layersPanelHeader {
-  padding: 0 8px 0 14px; height: var(--toolbar-h); border-bottom: 1px solid var(--border);
-  font-size: var(--ui-font-size); font-weight: 700; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--text-dim);
-  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+padding: 0 8px 0 14px; height: var(--toolbar-h); border-bottom: 1px solid var(--border);
+font-size: var(--ui-font-size); font-weight: 700; letter-spacing: 0.12em;
+text-transform: uppercase; color: var(--text-dim);
+display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
 }
 #uploadImageLayer, #addPaintLayer {
-  width: 38px; height: 38px; border-radius: var(--radius-sm);
-  background: transparent; border: none; color: var(--text); font-size: var(--ui-font-size);
-  line-height: 1; padding: 0; cursor: pointer; display: flex; align-items: center;
-  justify-content: center; transition: background var(--trans); flex-shrink: 0;
+width: 38px; height: 38px; border-radius: var(--radius-sm);
+background: transparent; border: none; color: var(--text); font-size: var(--ui-font-size);
+line-height: 1; padding: 0; cursor: pointer; display: flex; align-items: center;
+justify-content: center; transition: background var(--trans); flex-shrink: 0;
 }
 #uploadImageLayer:hover, #addPaintLayer:hover { background: var(--btn-hover); }
 #layersList { flex: 1; overflow-y: auto; padding: 6px; min-height: 0; }
 #layersList::-webkit-scrollbar { width: 4px; }
 #layersList::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 .layer-item {
-  display: flex; align-items: center; gap: 0; padding: 0; margin-bottom: 2px;
-  background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm);
-  cursor: pointer; transition: background var(--trans), border-color var(--trans); overflow: hidden;
+display: flex; align-items: center; gap: 0; padding: 0; margin-bottom: 2px;
+background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm);
+cursor: pointer; transition: background var(--trans), border-color var(--trans); overflow: hidden;
 }
 .layer-thumb {
-  width: 28px; height: 28px; border-radius: 4px; background: var(--btn-bg);
-  flex-shrink: 0; overflow: hidden; position: relative;
+width: 28px; height: 28px; border-radius: 4px; background: var(--btn-bg);
+flex-shrink: 0; overflow: hidden; position: relative;
 }
 .layer-thumb canvas { width: 100%; height: 100%; }
 .layer-thumb.paint-thumb { border: 1px solid var(--border); }
 .layer-label {
-  flex: 1; font-size: var(--ui-font-size); color: var(--text);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+flex: 1; font-size: var(--ui-font-size); color: var(--text);
+overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .layer-actions { display: flex; gap: 2px; flex-shrink: 0; }
 .layer-btn {
-  width: 22px; height: 22px; border-radius: var(--radius-sm);
-  background: none; border: none; color: var(--text-dim); font-size: var(--ui-font-size);
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: background var(--trans), color var(--trans);
+width: 22px; height: 22px; border-radius: var(--radius-sm);
+background: none; border: none; color: var(--text-dim); font-size: var(--ui-font-size);
+cursor: pointer; display: flex; align-items: center; justify-content: center;
+transition: background var(--trans), color var(--trans);
 }
 .layer-btn:hover { background: var(--btn-hover); color: var(--text); }
 .layer-btn.del:hover { color: var(--accent2); }
 .layer-btn.hidden-btn { opacity: 0.4; }
 .layer-action-btn {
-  display: flex; align-items: center; justify-content: center;
-  width: 38px; height: 38px; flex-shrink: 0; cursor: pointer;
-  border-radius: var(--radius-sm); color: var(--text-dim);
-  transition: background var(--trans), color var(--trans);
+display: flex; align-items: center; justify-content: center;
+width: 38px; height: 38px; flex-shrink: 0; cursor: pointer;
+border-radius: var(--radius-sm); color: var(--text-dim);
+transition: background var(--trans), color var(--trans);
 }
 .layer-action-btn:hover { background: var(--btn-hover); color: var(--text); }
 .layer-action-btn.del-btn:hover { color: var(--accent2); }
 .layer-action-btn.disabled { opacity: 0.2; pointer-events: none; }
 .layer-label-edit {
-  flex: 1; font-size: var(--ui-font-size); color: var(--text);
-  background: transparent; border: none; border-radius: 0; padding: 0;
-  outline: none; min-width: 0; font-family: inherit;
+flex: 1; font-size: var(--ui-font-size); color: var(--text);
+background: transparent; border: none; border-radius: 0; padding: 0;
+outline: none; min-width: 0; font-family: inherit;
 }
 .layer-no-active-hint {
-  font-size: var(--ui-font-size); color: var(--text-dim);
-  text-align: center; padding: 8px; font-style: italic;
+font-size: var(--ui-font-size); color: var(--text-dim);
+text-align: center; padding: 8px; font-style: italic;
 }
 #polylineIndicator { display: none !important; }
-#clipboardStatus  { display: none !important; }
+#clipboardStatus{ display: none !important; }
 #shapePreview {
-  position: fixed; pointer-events: none; z-index: 950;
-  top: 0; left: 0; width: 100%; height: 100%; display: none;
+position: fixed; pointer-events: none; z-index: 950;
+top: 0; left: 0; width: 100%; height: 100%; display: none;
 }
-.ctx-menu {
-  position: fixed; background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 4px; z-index: 2000;
-  min-width: 140px; box-shadow: 0 8px 24px #0008;
-}
-.ctx-item {
-  padding: 8px 12px; font-size: var(--ui-font-size); border-radius: var(--radius-sm);
-  cursor: pointer; display: flex; align-items: center; gap: 8px;
-  transition: background var(--trans);
-}
-.ctx-item:hover { background: var(--btn-hover); }
-  </style>
+</style>
 </head>
 <body>
-  <div id="toolbar">
+<div id="toolbar">
 <button class="tb-btn active" id="brushBtn">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <path d="M18.37 2.63 14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.58a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3Z"/>
 <path d="M9 8c-2 3-4 3.5-7 4l8 10c2-1 6-5 6-7"/>
-  </svg>
+</svg>
 </button>
 <button class="tb-btn" id="eraserBtn">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/>
 <path d="M22 21H7"/><path d="m5 11 9 9"/>
-  </svg>
+</svg>
 </button>
 <div class="tb-sep"></div>
 <button class="tb-btn" id="lineBtn">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
 <line x1="4" y1="20" x2="20" y2="4"/>
-  </svg>
+</svg>
 </button>
 <button class="tb-btn" id="rectBtn">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <rect x="3" y="3" width="18" height="18" rx="2"/>
-  </svg>
+</svg>
 </button>
 <button class="tb-btn" id="circleBtn">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 <circle cx="12" cy="12" r="9"/>
-  </svg>
+</svg>
 </button>
 <div class="tb-sep"></div>
 <div class="color-dot-wrap" id="brushColorWrap">
-  <div class="color-dot tb-btn" id="colorDot">
+<div class="color-dot tb-btn" id="colorDot">
 <div class="color-dot-circle" id="brushCircle" style="background:#ffffff"></div>
-  </div>
+</div>
 </div>
 <div id="brushSizeWrap">
-  <button class="tb-btn" id="sizeDown">
+<button class="tb-btn" id="sizeDown">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-  </button>
-  <span id="sizeLabel" style="font-size:var(--ui-font-size);color:var(--text-dim);min-width:24px;text-align:center;pointer-events:none;"></span>
-  <button class="tb-btn" id="sizeUp">
+</button>
+<span id="sizeLabel" style="font-size:var(--ui-font-size);color:var(--text-dim);min-width:24px;text-align:center;pointer-events:none;"></span>
+<button class="tb-btn" id="sizeUp">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-  </button>
+</button>
 </div>
 <div class="tb-sep"></div>
 <button class="tb-btn" id="selectBtn">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
 <rect x="3" y="3" width="18" height="18" rx="1" pathLength="100" stroke-dasharray="5 5"/>
-  </svg>
+</svg>
 </button>
 <button class="tb-btn" id="cutBtn" disabled style="opacity:0.35">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
 <circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/>
 <path d="M7.5 15.5 16 5"/><path d="M16.5 15.5 8 5"/>
-  </svg>
+</svg>
 </button>
 <button class="tb-btn" id="copyBtn" disabled style="opacity:0.35">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <rect x="9" y="9" width="13" height="13" rx="2"/>
 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-  </svg>
+</svg>
 </button>
 <button class="tb-btn" id="pasteBtn" disabled style="opacity:0.35">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
 <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-  </svg>
+</svg>
 </button>
 <div class="tb-sep"></div>
 <div class="color-dot-wrap" id="bgDotWrap">
-  <div class="color-dot tb-btn" id="bgDot">
+<div class="color-dot tb-btn" id="bgDot">
 <div class="color-dot-circle" id="bgCircle" style="background:#111113"></div>
-  </div>
+</div>
 </div>
 <div class="tb-sep"></div>
 <button class="tb-btn" id="cropExportBtn">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
 <rect x="3" y="3" width="18" height="18" rx="2"/>
 <line x1="3" y1="12" x2="21" y2="12"/>
 <line x1="12" y1="3" x2="12" y2="21"/>
-  </svg>
+</svg>
 </button>
 <button class="tb-btn" id="cropPadDown">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
 </button>
 <span id="cropPadLabel" style="font-size:var(--ui-font-size);color:var(--text-dim);min-width:28px;text-align:center;pointer-events:none;">8px</span>
 <button class="tb-btn" id="cropPadUp">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
 </button>
 <button class="tb-btn" id="cropBgBtn" style="font-size:var(--ui-font-size);font-weight:700;">BG</button>
 <button class="tb-btn" id="cropDownloadBtn" disabled style="opacity:0.35;">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
 <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-  </svg>
+</svg>
 </button>
-  </div>
-  
-  <div id="brushStripPalette" class="color-strip-palette"></div>
-  <div id="bgStripPalette" class="color-strip-palette"></div>
-  <canvas id="cursorOverlay" style="position:fixed;inset:0;pointer-events:none;z-index:998;"></canvas>
-  <div id="polylineIndicator">Click to place end point · Esc to cancel</div>
-  <div id="clipboardStatus"></div>
-  <div id="layersPanel">
+</div>
+<div id="brushStripPalette" class="color-strip-palette"></div>
+<div id="bgStripPalette" class="color-strip-palette"></div>
+<div id="layersPanelOverlay"></div>
+<button id="layersToggleBtn" aria-label="Toggle layers">
+<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>
+</svg>
+</button>
+<canvas id="cursorOverlay" style="position:fixed;inset:0;pointer-events:none;z-index:998;"></canvas>
+<div id="polylineIndicator">Click to place end point · Esc to cancel</div>
+<div id="clipboardStatus"></div>
+<div id="layersPanel">
 <div id="layersPanelHeader">
-  <span>Layers</span>
-  <div style="display:flex;gap:2px">
+<span>Layers</span>
+<div style="display:flex;gap:2px">
 <button id="uploadImageLayer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
 <input type="file" id="uploadImageInput" accept="image/*" style="display:none">
 <button id="addPaintLayer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
-  </div>
+</div>
 </div>
 <div id="layersList"></div>
-  </div>
-  <canvas id="canvas"></canvas>
-  <canvas id="shapePreview"></canvas>
-  <canvas id="selectOverlay" style="position:fixed;top:0;left:0;pointer-events:none;z-index:960;display:none"></canvas>
-  <canvas id="cropExportOverlay" style="position:fixed;top:0;left:0;pointer-events:none;z-index:961;display:none"></canvas>
-  <script>
-const canvas   = document.getElementById("canvas");
-const ctx  = canvas.getContext("2d");
-const shapePreviewCanvas   = document.getElementById("shapePreview");
+</div>
+<canvas id="canvas"></canvas>
+<canvas id="shapePreview"></canvas>
+<canvas id="selectOverlay" style="position:fixed;top:0;left:0;pointer-events:none;z-index:960;display:none"></canvas>
+<canvas id="cropExportOverlay" style="position:fixed;top:0;left:0;pointer-events:none;z-index:961;display:none"></canvas>
+<script>
+const canvas = document.getElementById("canvas");
+const ctx= canvas.getContext("2d");
+let _pinchDist = null, _pinchMid = null;
+const shapePreviewCanvas = document.getElementById("shapePreview");
 const shapeCtx = shapePreviewCanvas.getContext("2d");
-const selectOverlayCanvas  = document.getElementById("selectOverlay");
-const selCtx   = selectOverlayCanvas.getContext("2d");
+const selectOverlayCanvas= document.getElementById("selectOverlay");
+const selCtx = selectOverlayCanvas.getContext("2d");
 const cropExportOverlayCanvas = document.getElementById("cropExportOverlay");
-const cropSelCtx   = cropExportOverlayCanvas.getContext("2d");
-const layersList   = document.getElementById("layersList");
+const cropSelCtx = cropExportOverlayCanvas.getContext("2d");
+const layersList = document.getElementById("layersList");
 const colorDot = document.getElementById("colorDot");
 const bgDot= document.getElementById("bgDot");
 const FIB= [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144];
 const CHUNK_SIZE = 512;
 const EXPORT_GRID= 512;
-const DRAG_THRESHOLD = 6;   
+const DRAG_THRESHOLD = 6; 
 const CROP_PAD_VALUES = [0, 16, 32, 64, 128];
 const PALETTE_COLORS = [
-  "#000000", "#111113", "#808080", "#ffffff",
-  "#ff0000", "#ff8000", "#ffd700", "#ffff00",
-  "#80ff00", "#008000", "#008080", "#00ffff",
-  "#0000ff", "#800080", "#ff00ff", "#ff80c0",
+"#000000", "#111113", "#808080", "#ffffff",
+"#ff0000", "#ff8000", "#ffd700", "#ffff00",
+"#80ff00", "#008000", "#008080", "#00ffff",
+"#0000ff", "#800080", "#ff00ff", "#ff80c0",
 ];
 let brushSizeIdx = 1, brushSize = FIB[1];
-let currentTool  = "brush";
-let bgColor  = "#111113", brushColor = "#ffffff";
+let currentTool= "brush";
+let bgColor= "#111113", brushColor = "#ffffff";
 let offsetX = 0, offsetY = 0, scale = 1;
 let leftDown = false, middleDown = false;
 let cursorX = 0, cursorY = 0, prevX = 0, prevY = 0;
 let activePointerId = null;
-let clipboard = null;   
+let clipboard = null; 
 let polylinePoints = [];
-let shapeDragMode  = false, shapeDownX = 0, shapeDownY = 0;
+let shapeDragMode= false, shapeDownX = 0, shapeDownY = 0;
 let selectRect = null, selectDragStart = null, selectMoving = false;
 let selectMoveOffset = { x: 0, y: 0 };
 let selectStart= null, selectDragMode = false, selectDownX = 0, selectDownY = 0;
 let cropExportStart = null, cropExportDragging = false;
 let cropExportDownX = 0, cropExportDownY = 0;
 let cropSelectedCells = [], cropPadIdx = 1, cropIncludeBg = true;
-let pasteGhost   = null;
-let floatingSel  = null;
+let pasteGhost = null;
+let floatingSel= null;
 let layers = [], activePaintLayerIndex = null, selectedImageLayerIndex = null;
 let draggingImage = false, dragOffset = { x: 0, y: 0 }, imageDragStart = null;
 let currentStroke = null, shapeStart = null;
 let _dirtyRAF = null, _imageDragRAF = null;
 const toScreenX = x => (x + offsetX) * scale;
 const toScreenY = y => (y + offsetY) * scale;
-const toTrueX   = x => x / scale - offsetX;
-const toTrueY   = y => y / scale - offsetY;
+const toTrueX = x => x / scale - offsetX;
+const toTrueY = y => y / scale - offsetY;
 function getCropPad() { return CROP_PAD_VALUES[cropPadIdx] || 0; }
 function chunkKey(cx, cy) { return cx + "," + cy; }
 function getOrCreateChunk(layer, cx, cy) {
-  const key = chunkKey(cx, cy);
-  if (!layer.chunks[key]) {
+const key = chunkKey(cx, cy);
+if (!layer.chunks[key]) {
 const c = document.createElement("canvas");
 c.width = c.height = CHUNK_SIZE;
 layer.chunks[key] = { canvas: c, ctx: c.getContext("2d"), cx, cy };
-  }
-  return layer.chunks[key];
+}
+return layer.chunks[key];
 }
 const _chunksInRectResult = [];
 function getChunksInRect(layer, x0, y0, x1, y1) {
-  const minCx = Math.floor(Math.min(x0, x1) / CHUNK_SIZE);
-  const maxCx = Math.floor(Math.max(x0, x1) / CHUNK_SIZE);
-  const minCy = Math.floor(Math.min(y0, y1) / CHUNK_SIZE);
-  const maxCy = Math.floor(Math.max(y0, y1) / CHUNK_SIZE);
-  _chunksInRectResult.length = 0;
-  for (let cx = minCx; cx <= maxCx; cx++)
+const minCx = Math.floor(Math.min(x0, x1) / CHUNK_SIZE);
+const maxCx = Math.floor(Math.max(x0, x1) / CHUNK_SIZE);
+const minCy = Math.floor(Math.min(y0, y1) / CHUNK_SIZE);
+const maxCy = Math.floor(Math.max(y0, y1) / CHUNK_SIZE);
+_chunksInRectResult.length = 0;
+for (let cx = minCx; cx <= maxCx; cx++)
 for (let cy = minCy; cy <= maxCy; cy++)
-  _chunksInRectResult.push({ cx, cy });
-  return _chunksInRectResult;
+_chunksInRectResult.push({ cx, cy });
+return _chunksInRectResult;
 }
 function forEachChunkInRegion(layer, rx, ry, rw, rh, cb, requireExists = false) {
-  const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
-  const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE);
-  const cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
-  for (let cx = cMinX; cx <= cMaxX; cx++) {
+const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
+const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE);
+const cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
+for (let cx = cMinX; cx <= cMaxX; cx++) {
 for (let cy = cMinY; cy <= cMaxY; cy++) {
-  const key = chunkKey(cx, cy);
-  if (requireExists && !layer.chunks[key]) continue;
-  const chunk = requireExists ? layer.chunks[key] : getOrCreateChunk(layer, cx, cy);
-  const chunkOriginX = cx * CHUNK_SIZE, chunkOriginY = cy * CHUNK_SIZE;
-  const srcX  = Math.max(0, rx - chunkOriginX), srcY  = Math.max(0, ry - chunkOriginY);
-  const drawX = chunkOriginX + srcX - rx,drawY = chunkOriginY + srcY - ry;
-  const copyW = Math.min(CHUNK_SIZE - srcX, rw - drawX);
-  const copyH = Math.min(CHUNK_SIZE - srcY, rh - drawY);
-  if (copyW > 0 && copyH > 0) cb(chunk, drawX, drawY, copyW, copyH, srcX, srcY);
+const key = chunkKey(cx, cy);
+if (requireExists && !layer.chunks[key]) continue;
+const chunk = requireExists ? layer.chunks[key] : getOrCreateChunk(layer, cx, cy);
+const chunkOriginX = cx * CHUNK_SIZE, chunkOriginY = cy * CHUNK_SIZE;
+const srcX= Math.max(0, rx - chunkOriginX), srcY= Math.max(0, ry - chunkOriginY);
+const drawX = chunkOriginX + srcX - rx,drawY = chunkOriginY + srcY - ry;
+const copyW = Math.min(CHUNK_SIZE - srcX, rw - drawX);
+const copyH = Math.min(CHUNK_SIZE - srcY, rh - drawY);
+if (copyW > 0 && copyH > 0) cb(chunk, drawX, drawY, copyW, copyH, srcX, srcY);
 }
-  }
+}
 }
 function resizeCanvases() {
-  const w = document.body.clientWidth, h = document.body.clientHeight;
-  [canvas, shapePreviewCanvas, selectOverlayCanvas, cropExportOverlayCanvas].forEach(c => {
+const w = document.body.clientWidth, h = document.body.clientHeight;
+[canvas, shapePreviewCanvas, selectOverlayCanvas, cropExportOverlayCanvas].forEach(c => {
 c.width = w; c.height = h;
 c.style.width = w + "px"; c.style.height = h + "px";
-  });
+});
 }
 function createPaintLayer(name) {
-  return { type: "paint", name: name || "Layer " + (layers.length + 1), chunks: {}, visible: true, x: 0, y: 0, scale: 1 };
+return { type: "paint", name: name || "Layer " + (layers.length + 1), chunks: {}, visible: true, x: 0, y: 0, scale: 1 };
 }
 function addPaintLayer(name) {
-  layers.push(createPaintLayer(name));
-  activePaintLayerIndex = layers.length - 1;
-  selectedImageLayerIndex = null;
-  refreshLayersPanel(); redraw();
+layers.push(createPaintLayer(name));
+activePaintLayerIndex = layers.length - 1;
+selectedImageLayerIndex = null;
+refreshLayersPanel(); redraw();
 }
 function addImageLayer(img, x, y, name) {
-  layers.push({ type: "image", name: name || "Image", img, x, y, scale: 1, visible: true });
-  selectedImageLayerIndex = layers.length - 1;
-  activePaintLayerIndex = null;
-  refreshLayersPanel(); redraw();
+layers.push({ type: "image", name: name || "Image", img, x, y, scale: 1, visible: true });
+selectedImageLayerIndex = layers.length - 1;
+activePaintLayerIndex = null;
+refreshLayersPanel(); redraw();
 }
 function redraw() {
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  if (scale > 0.02) {
+ctx.fillStyle = bgColor;
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+if (scale > 0.02) {
 const visMinX = toTrueX(0), visMinY = toTrueY(0);
 const visMaxX = toTrueX(canvas.width), visMaxY = toTrueY(canvas.height);
 const startGX = Math.floor(visMinX / EXPORT_GRID) * EXPORT_GRID;
@@ -416,101 +448,98 @@ ctx.lineWidth = 1;
 ctx.setLineDash([5, 6]);
 ctx.beginPath();
 for (let gx = startGX; gx <= visMaxX + EXPORT_GRID; gx += EXPORT_GRID) {
-  const sx = toScreenX(gx);
-  ctx.moveTo(sx, 0); ctx.lineTo(sx, canvas.height);
+const sx = toScreenX(gx);
+ctx.moveTo(sx, 0); ctx.lineTo(sx, canvas.height);
 }
 for (let gy = startGY; gy <= visMaxY + EXPORT_GRID; gy += EXPORT_GRID) {
-  const sy = toScreenY(gy);
-  ctx.moveTo(0, sy); ctx.lineTo(canvas.width, sy);
+const sy = toScreenY(gy);
+ctx.moveTo(0, sy); ctx.lineTo(canvas.width, sy);
 }
 ctx.stroke();
 const gridScrW = EXPORT_GRID * scale;
 if (gridScrW > 60) {
-  ctx.setLineDash([]);
-  ctx.fillStyle = "rgba(160,148,255,0.45)";
-  ctx.font = `${Math.min(11, gridScrW / 24)}px monospace`;
-  for (let gx = startGX; gx <= visMaxX + EXPORT_GRID; gx += EXPORT_GRID) {
+ctx.setLineDash([]);
+ctx.fillStyle = "rgba(160,148,255,0.45)";
+ctx.font = `${Math.min(11, gridScrW / 24)}px monospace`;
+for (let gx = startGX; gx <= visMaxX + EXPORT_GRID; gx += EXPORT_GRID) {
 for (let gy = startGY; gy <= visMaxY + EXPORT_GRID; gy += EXPORT_GRID) {
-  const sx = toScreenX(gx), sy = toScreenY(gy);
-  if (sx >= 0 && sx < canvas.width && sy >= 0 && sy < canvas.height)
+const sx = toScreenX(gx), sy = toScreenY(gy);
+if (sx >= 0 && sx < canvas.width && sy >= 0 && sy < canvas.height)
 ctx.fillText(`[${gx / EXPORT_GRID},${gy / EXPORT_GRID}]`, sx + 6, sy + 14);
 }
-  }
+}
 }
 ctx.restore();
-  }
-  
-  const visMinX = toTrueX(0), visMinY = toTrueY(0);
-  const visMaxX = toTrueX(canvas.width), visMaxY = toTrueY(canvas.height);
-  layers.forEach((layer, i) => {
+}
+const visMinX = toTrueX(0), visMinY = toTrueY(0);
+const visMaxX = toTrueX(canvas.width), visMaxY = toTrueY(canvas.height);
+layers.forEach((layer, i) => {
 if (!layer.visible) return;
 if (layer.type === "paint") {
-  const minCx = Math.floor(visMinX / CHUNK_SIZE) - 1;
-  const maxCx = Math.ceil(visMaxX / CHUNK_SIZE);
-  const minCy = Math.floor(visMinY / CHUNK_SIZE) - 1;
-  const maxCy = Math.ceil(visMaxY / CHUNK_SIZE);
-  for (let cx = minCx; cx <= maxCx; cx++) {
+const minCx = Math.floor(visMinX / CHUNK_SIZE) - 1;
+const maxCx = Math.ceil(visMaxX / CHUNK_SIZE);
+const minCy = Math.floor(visMinY / CHUNK_SIZE) - 1;
+const maxCy = Math.ceil(visMaxY / CHUNK_SIZE);
+for (let cx = minCx; cx <= maxCx; cx++) {
 for (let cy = minCy; cy <= maxCy; cy++) {
-  const chunk = layer.chunks[chunkKey(cx, cy)];
-  if (!chunk) continue;
-  const sx = Math.round(toScreenX(cx * CHUNK_SIZE));
-  const sy = Math.round(toScreenY(cy * CHUNK_SIZE));
-  const ex = Math.round(toScreenX((cx + 1) * CHUNK_SIZE));
-  const ey = Math.round(toScreenY((cy + 1) * CHUNK_SIZE));
-  ctx.drawImage(chunk.canvas, sx, sy, ex - sx, ey - sy);
+const chunk = layer.chunks[chunkKey(cx, cy)];
+if (!chunk) continue;
+const sx = Math.round(toScreenX(cx * CHUNK_SIZE));
+const sy = Math.round(toScreenY(cy * CHUNK_SIZE));
+const ex = Math.round(toScreenX((cx + 1) * CHUNK_SIZE));
+const ey = Math.round(toScreenY((cy + 1) * CHUNK_SIZE));
+ctx.drawImage(chunk.canvas, sx, sy, ex - sx, ey - sy);
 }
-  }
+}
 } else if (layer.type === "image") {
-  const w = layer.img.width * layer.scale * scale;
-  const h = layer.img.height * layer.scale * scale;
-  const sx = toScreenX(layer.x), sy = toScreenY(layer.y);
-  ctx.drawImage(layer.img, sx, sy, w, h);
-  if (i === selectedImageLayerIndex) {
+const w = layer.img.width * layer.scale * scale;
+const h = layer.img.height * layer.scale * scale;
+const sx = toScreenX(layer.x), sy = toScreenY(layer.y);
+ctx.drawImage(layer.img, sx, sy, w, h);
+if (i === selectedImageLayerIndex) {
 const isOriginalScale = Math.abs(layer.scale - 1) < 0.001;
 ctx.strokeStyle = isOriginalScale ? "#ffd60a" : "#7c6dff";
 ctx.lineWidth = 2;
 ctx.setLineDash([5, 3]);
 ctx.strokeRect(sx, sy, w, h);
 ctx.setLineDash([]);
-  }
 }
-  });
-  if (currentTool === "select") updateSelectOverlay();
-  if (currentTool === "cropExport") updateCropExportOverlay();
-  
-  if (floatingSel && selectRect) {
+}
+});
+if (currentTool === "select") updateSelectOverlay();
+if (currentTool === "cropExport") updateCropExportOverlay();
+if (floatingSel && selectRect) {
 const sx = toScreenX(selectRect.x), sy = toScreenY(selectRect.y);
 ctx.globalAlpha = 0.85;
 ctx.drawImage(floatingSel.tmpCanvas, sx, sy, floatingSel.w * scale, floatingSel.h * scale);
 ctx.globalAlpha = 1;
-  }
-  
-  if (pasteGhost) {
+}
+if (pasteGhost) {
 ctx.globalAlpha = 0.55;
 ctx.drawImage(pasteGhost.tmpCanvas, toScreenX(pasteGhost.tx), toScreenY(pasteGhost.ty),
-  pasteGhost.w * scale, pasteGhost.h * scale);
+pasteGhost.w * scale, pasteGhost.h * scale);
 ctx.globalAlpha = 1;
-  }
+}
 }
 function drawOnActiveLayer(x0, y0, x1, y1, tool, color, size) {
-  if (activePaintLayerIndex === null) return;
-  const layer = layers[activePaintLayerIndex];
-  if (!layer || layer.type !== "paint") return;
-  invalidateLayerThumb(layer);
-  const pad = tool === "eraser" ? size * 1.5 : size / 2;
-  getChunksInRect(layer, x0 - pad, y0 - pad, x1 + pad, y1 + pad).forEach(({ cx, cy }) => {
+if (activePaintLayerIndex === null) return;
+const layer = layers[activePaintLayerIndex];
+if (!layer || layer.type !== "paint") return;
+invalidateLayerThumb(layer);
+const pad = tool === "eraser" ? size * 1.5 : size / 2;
+getChunksInRect(layer, x0 - pad, y0 - pad, x1 + pad, y1 + pad).forEach(({ cx, cy }) => {
 const chunk = getOrCreateChunk(layer, cx, cy);
 const lctx = chunk.ctx;
 const ox = cx * CHUNK_SIZE, oy = cy * CHUNK_SIZE;
 lctx.save();
 if (tool === "eraser") {
-  lctx.globalCompositeOperation = "destination-out";
-  lctx.strokeStyle = "rgba(0,0,0,1)";
-  lctx.lineWidth = size * 3;
+lctx.globalCompositeOperation = "destination-out";
+lctx.strokeStyle = "rgba(0,0,0,1)";
+lctx.lineWidth = size * 3;
 } else {
-  lctx.globalCompositeOperation = "source-over";
-  lctx.strokeStyle = color;
-  lctx.lineWidth = size;
+lctx.globalCompositeOperation = "source-over";
+lctx.strokeStyle = color;
+lctx.lineWidth = size;
 }
 lctx.lineCap = lctx.lineJoin = "round";
 lctx.beginPath();
@@ -518,20 +547,20 @@ lctx.moveTo(x0 - ox, y0 - oy);
 lctx.lineTo(x1 - ox, y1 - oy);
 lctx.stroke();
 lctx.restore();
-  });
+});
 }
 function drawShapeOnLayer(layer, tool, sx, sy, ex, ey, color, size, extra) {
-  invalidateLayerThumb(layer);
-  const pad = size * 2;
-  let bx0, by0, bx1, by1;
-  if (tool === "circle" && extra) {
+invalidateLayerThumb(layer);
+const pad = size * 2;
+let bx0, by0, bx1, by1;
+if (tool === "circle" && extra) {
 bx0 = extra.cx - extra.r - pad; by0 = extra.cy - extra.r - pad;
 bx1 = extra.cx + extra.r + pad; by1 = extra.cy + extra.r + pad;
-  } else {
+} else {
 bx0 = Math.min(sx, ex) - pad; by0 = Math.min(sy, ey) - pad;
 bx1 = Math.max(sx, ex) + pad; by1 = Math.max(sy, ey) + pad;
-  }
-  getChunksInRect(layer, bx0, by0, bx1, by1).forEach(({ cx, cy }) => {
+}
+getChunksInRect(layer, bx0, by0, bx1, by1).forEach(({ cx, cy }) => {
 const chunk = getOrCreateChunk(layer, cx, cy);
 const lctx = chunk.ctx;
 const ox = cx * CHUNK_SIZE, oy = cy * CHUNK_SIZE;
@@ -539,291 +568,289 @@ lctx.strokeStyle = color; lctx.lineWidth = size;
 lctx.lineCap = lctx.lineJoin = "round";
 lctx.beginPath();
 if (tool === "line") {
-  lctx.moveTo(sx - ox, sy - oy); lctx.lineTo(ex - ox, ey - oy); lctx.stroke();
+lctx.moveTo(sx - ox, sy - oy); lctx.lineTo(ex - ox, ey - oy); lctx.stroke();
 } else if (tool === "rect") {
-  lctx.strokeRect(sx - ox, sy - oy, ex - sx, ey - sy);
+lctx.strokeRect(sx - ox, sy - oy, ex - sx, ey - sy);
 } else if (tool === "circle" && extra) {
-  lctx.arc(extra.cx - ox, extra.cy - oy, extra.r, 0, Math.PI * 2); lctx.stroke();
+lctx.arc(extra.cx - ox, extra.cy - oy, extra.r, 0, Math.PI * 2); lctx.stroke();
 }
-  });
+});
 }
 function getCircleFromDrag(screenSX, screenSY, screenEX, screenEY) {
-  const dx = screenEX - screenSX, dy = screenEY - screenSY;
-  return { r: Math.sqrt(dx * dx + dy * dy) / 2, cx: screenSX + dx / 2, cy: screenSY + dy / 2 };
+const dx = screenEX - screenSX, dy = screenEY - screenSY;
+return { r: Math.sqrt(dx * dx + dy * dy) / 2, cx: screenSX + dx / 2, cy: screenSY + dy / 2 };
 }
 function drawShapePreview(screenSX, screenSY, screenEX, screenEY) {
-  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-  shapeCtx.strokeStyle = brushColor;
-  shapeCtx.lineWidth = brushSize * scale;
-  shapeCtx.lineCap = shapeCtx.lineJoin = "round";
-  shapeCtx.beginPath();
-  if (currentTool === "line") {
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+shapeCtx.strokeStyle = brushColor;
+shapeCtx.lineWidth = brushSize * scale;
+shapeCtx.lineCap = shapeCtx.lineJoin = "round";
+shapeCtx.beginPath();
+if (currentTool === "line") {
 shapeCtx.moveTo(screenSX, screenSY); shapeCtx.lineTo(screenEX, screenEY); shapeCtx.stroke();
-  } else if (currentTool === "rect") {
+} else if (currentTool === "rect") {
 shapeCtx.strokeRect(screenSX, screenSY, screenEX - screenSX, screenEY - screenSY);
-  } else if (currentTool === "circle") {
+} else if (currentTool === "circle") {
 const { cx, cy, r } = getCircleFromDrag(screenSX, screenSY, screenEX, screenEY);
 shapeCtx.arc(cx, cy, r, 0, Math.PI * 2); shapeCtx.stroke();
-  }
+}
 }
 function drawDottedRectPreview(screenSX, screenSY, screenEX, screenEY, color) {
-  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-  shapeCtx.save();
-  shapeCtx.strokeStyle = color || "#7c6dff";
-  shapeCtx.lineWidth = 1.5;
-  shapeCtx.setLineDash([5, 4]);
-  shapeCtx.strokeRect(
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+shapeCtx.save();
+shapeCtx.strokeStyle = color || "#7c6dff";
+shapeCtx.lineWidth = 1.5;
+shapeCtx.setLineDash([5, 4]);
+shapeCtx.strokeRect(
 Math.min(screenSX, screenEX), Math.min(screenSY, screenEY),
 Math.abs(screenEX - screenSX), Math.abs(screenEY - screenSY)
-  );
-  shapeCtx.setLineDash([]);
-  shapeCtx.restore();
+);
+shapeCtx.setLineDash([]);
+shapeCtx.restore();
 }
 function drawPolylinePreview(screenX, screenY) {
-  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-  if (!polylinePoints.length) return;
-  const last = polylinePoints[polylinePoints.length - 1];
-  shapeCtx.strokeStyle = brushColor;
-  shapeCtx.lineWidth = brushSize * scale;
-  shapeCtx.lineCap = shapeCtx.lineJoin = "round";
-  shapeCtx.beginPath();
-  shapeCtx.moveTo(toScreenX(last.x), toScreenY(last.y));
-  shapeCtx.lineTo(screenX, screenY);
-  shapeCtx.stroke();
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+if (!polylinePoints.length) return;
+const last = polylinePoints[polylinePoints.length - 1];
+shapeCtx.strokeStyle = brushColor;
+shapeCtx.lineWidth = brushSize * scale;
+shapeCtx.lineCap = shapeCtx.lineJoin = "round";
+shapeCtx.beginPath();
+shapeCtx.moveTo(toScreenX(last.x), toScreenY(last.y));
+shapeCtx.lineTo(screenX, screenY);
+shapeCtx.stroke();
 }
 function blitCanvasToLayer(layer, srcCanvas, rx, ry, rw, rh) {
-  forEachChunkInRegion(layer, rx, ry, rw, rh, (chunk, drawX, drawY, copyW, copyH, srcX, srcY) => {
+forEachChunkInRegion(layer, rx, ry, rw, rh, (chunk, drawX, drawY, copyW, copyH, srcX, srcY) => {
 chunk.ctx.drawImage(srcCanvas, srcX, srcY, copyW, copyH, drawX, drawY, copyW, copyH);
-  });
+});
 }
 function eraseRegionInLayer(layer, rx, ry, rw, rh) {
-  forEachChunkInRegion(layer, rx, ry, rw, rh, (chunk, drawX, drawY, copyW, copyH) => {
+forEachChunkInRegion(layer, rx, ry, rw, rh, (chunk, drawX, drawY, copyW, copyH) => {
 chunk.ctx.clearRect(drawX, drawY, copyW, copyH);
-  }, true);
+}, true);
 }
 function captureRegionFromLayer(layer, rx, ry, rw, rh) {
-  const tmp = document.createElement("canvas");
-  tmp.width = rw; tmp.height = rh;
-  const tc = tmp.getContext("2d");
-  forEachChunkInRegion(layer, rx, ry, rw, rh, (chunk, drawX, drawY, copyW, copyH, srcX, srcY) => {
+const tmp = document.createElement("canvas");
+tmp.width = rw; tmp.height = rh;
+const tc = tmp.getContext("2d");
+forEachChunkInRegion(layer, rx, ry, rw, rh, (chunk, drawX, drawY, copyW, copyH, srcX, srcY) => {
 tc.drawImage(chunk.canvas, srcX, srcY, copyW, copyH, drawX, drawY, copyW, copyH);
-  }, true);
-  return tmp;
+}, true);
+return tmp;
 }
 function setTool(tool) {
-  
-  if (pasteGhost) {
+if (pasteGhost) {
 pasteGhost = null;
 cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
-  }
-  if (currentTool === "line" && tool !== "line" && polylinePoints.length > 0) {
+}
+if (currentTool === "line" && tool !== "line" && polylinePoints.length > 0) {
 polylinePoints = [];
 shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-  }
-  if (["rect", "circle"].includes(currentTool) && !["rect", "circle"].includes(tool)) {
+}
+if (["rect", "circle"].includes(currentTool) && !["rect", "circle"].includes(tool)) {
 shapeStart = null;
 shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-  }
-  if (currentTool === "select" && tool !== "select") {
+}
+if (currentTool === "select" && tool !== "select") {
 if (floatingSel) commitFloatingSel();
 selectRect = selectStart = selectDragStart = null;
 selectDragMode = false;
 updateSelectOverlay();
 shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
 updateClipboardBtns();
-  }
-  if (currentTool === "cropExport" && tool !== "cropExport") resetCropExport();
-  currentTool = tool;
-  document.querySelectorAll(".tb-btn[id$='Btn']").forEach(b => b.classList.remove("active"));
-  const map = { select:"selectBtn", brush:"brushBtn", eraser:"eraserBtn", line:"lineBtn", rect:"rectBtn", circle:"circleBtn", cropExport:"cropExportBtn" };
-  document.getElementById(map[tool])?.classList.add("active");
-  if (tool !== "line")
+}
+if (currentTool === "cropExport" && tool !== "cropExport") resetCropExport();
+currentTool = tool;
+document.querySelectorAll(".tb-btn[id$='Btn']").forEach(b => b.classList.remove("active"));
+const map = { select:"selectBtn", brush:"brushBtn", eraser:"eraserBtn", line:"lineBtn", rect:"rectBtn", circle:"circleBtn", cropExport:"cropExportBtn" };
+document.getElementById(map[tool])?.classList.add("active");
+if (tool !== "line")
 shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-  shapePreviewCanvas.style.display = ["line","rect","circle","select"].includes(tool) ? "block" : "none";
-  updateCanvasCursor();
-  document.getElementById("polylineIndicator").style.display = "none";
+shapePreviewCanvas.style.display = ["line","rect","circle","select"].includes(tool) ? "block" : "none";
+updateCanvasCursor();
+document.getElementById("polylineIndicator").style.display = "none";
 }
 const DRAWING_TOOL_IDS = ["brushBtn","eraserBtn","lineBtn","rectBtn","circleBtn","selectBtn",
-  "cutBtn","copyBtn","pasteBtn","sizeUp","sizeDown","colorDot","brushColorWrap"];
+"cutBtn","copyBtn","pasteBtn","sizeUp","sizeDown","colorDot","brushColorWrap"];
 function updateToolbarState() {
-  const hasValidLayer = activePaintLayerIndex !== null;
-  DRAWING_TOOL_IDS.forEach(id => {
+const hasValidLayer = activePaintLayerIndex !== null;
+DRAWING_TOOL_IDS.forEach(id => {
 const el = document.getElementById(id);
 if (!el) return;
 el.style.opacity= hasValidLayer ? "" : "0.25";
-el.style.pointerEvents  = hasValidLayer ? "" : "none";
-  });
+el.style.pointerEvents= hasValidLayer ? "" : "none";
+});
 }
 function updateColorDot() {
-  document.getElementById("brushCircle").style.background = brushColor;
+document.getElementById("brushCircle").style.background = brushColor;
 }
 function setBtnDisabled(btn, disabled) {
-  btn.style.opacity = disabled ? "0.2" : "";
-  btn.style.pointerEvents = disabled ? "none" : "";
+btn.style.opacity = disabled ? "0.2" : "";
+btn.style.pointerEvents = disabled ? "none" : "";
 }
 function updateSizeBtns() {
-  setBtnDisabled(document.getElementById("sizeUp"),   brushSizeIdx >= FIB.length - 1);
-  setBtnDisabled(document.getElementById("sizeDown"), brushSizeIdx <= 0);
-  document.getElementById("sizeLabel").textContent = brushSize;
+setBtnDisabled(document.getElementById("sizeUp"), brushSizeIdx >= FIB.length - 1);
+setBtnDisabled(document.getElementById("sizeDown"), brushSizeIdx <= 0);
+document.getElementById("sizeLabel").textContent = brushSize;
 }
 document.getElementById("sizeUp").addEventListener("click", () => {
-  if (brushSizeIdx < FIB.length - 1) { brushSizeIdx++; brushSize = FIB[brushSizeIdx]; }
-  updateSizeBtns(); scheduleCursorDraw();
+if (brushSizeIdx < FIB.length - 1) { brushSizeIdx++; brushSize = FIB[brushSizeIdx]; }
+updateSizeBtns(); scheduleCursorDraw();
 });
 document.getElementById("sizeDown").addEventListener("click", () => {
-  if (brushSizeIdx > 0) { brushSizeIdx--; brushSize = FIB[brushSizeIdx]; }
-  updateSizeBtns(); scheduleCursorDraw();
+if (brushSizeIdx > 0) { brushSizeIdx--; brushSize = FIB[brushSizeIdx]; }
+updateSizeBtns(); scheduleCursorDraw();
 });
 updateSizeBtns();
 function positionStripPalette(stripEl) {
-  const toolbar = document.getElementById("toolbar");
-  const tbRect = toolbar.getBoundingClientRect();
-  stripEl.style.top = (tbRect.bottom + 8) + "px";
-  stripEl.style.width = tbRect.width + "px";
+const toolbar = document.getElementById("toolbar");
+const tbRect = toolbar.getBoundingClientRect();
+stripEl.style.top = (tbRect.bottom + 8) + "px";
+stripEl.style.width = tbRect.width + "px";
 }
 function buildStripPalette(stripEl, colors, currentColor, onPick) {
-  stripEl.innerHTML = "";
-  colors.forEach(col => {
+stripEl.innerHTML = "";
+colors.forEach(col => {
 const s = document.createElement("div");
 s.className = "strip-swatch" + (col === currentColor ? " selected" : "");
 s.style.background = col;
 s.addEventListener("pointerdown", e => {
-  e.stopPropagation();
-  onPick(col);
-  
-  stripEl.querySelectorAll(".strip-swatch").forEach(sw => sw.classList.remove("selected"));
-  s.classList.add("selected");
-  closeAllDropdowns();
+e.stopPropagation();
+onPick(col);
+stripEl.querySelectorAll(".strip-swatch").forEach(sw => sw.classList.remove("selected"));
+s.classList.add("selected");
+closeAllDropdowns();
 });
 stripEl.appendChild(s);
-  });
+});
 }
 function openStripPalette(stripEl, colors, currentColor, onPick) {
-  closeAllDropdowns();
-  buildStripPalette(stripEl, colors, currentColor, onPick);
-  positionStripPalette(stripEl);
-  stripEl.classList.add("open");
-  setTimeout(() => document.addEventListener("pointerdown", onOutsideDown), 30);
+closeAllDropdowns();
+buildStripPalette(stripEl, colors, currentColor, onPick);
+positionStripPalette(stripEl);
+stripEl.classList.add("open");
+setTimeout(() => document.addEventListener("pointerdown", onOutsideDown), 30);
 }
 function closeAllDropdowns() {
-  document.querySelectorAll(".color-strip-palette.open").forEach(el => el.classList.remove("open"));
-  document.removeEventListener("pointerdown", onOutsideDown);
+document.querySelectorAll(".color-strip-palette.open").forEach(el => el.classList.remove("open"));
+document.removeEventListener("pointerdown", onOutsideDown);
 }
 function onOutsideDown(e) {
-  const path = e.composedPath ? e.composedPath() : [];
-  if ([...document.querySelectorAll(".color-strip-palette,.color-dot")].some(el => path.includes(el))) return;
-  closeAllDropdowns();
+const path = e.composedPath ? e.composedPath() : [];
+if ([...document.querySelectorAll(".color-strip-palette,.color-dot")].some(el => path.includes(el))) return;
+closeAllDropdowns();
 }
 colorDot.onclick = e => {
-  e.stopPropagation();
-  const strip = document.getElementById("brushStripPalette");
-  if (strip.classList.contains("open")) { closeAllDropdowns(); return; }
-  openStripPalette(strip, PALETTE_COLORS, brushColor, col => { brushColor = col; updateColorDot(); });
+e.stopPropagation();
+const strip = document.getElementById("brushStripPalette");
+if (strip.classList.contains("open")) { closeAllDropdowns(); return; }
+openStripPalette(strip, PALETTE_COLORS, brushColor, col => { brushColor = col; updateColorDot(); });
 };
 bgDot.onclick = e => {
-  e.stopPropagation();
-  const strip = document.getElementById("bgStripPalette");
-  if (strip.classList.contains("open")) { closeAllDropdowns(); return; }
-  openStripPalette(strip, PALETTE_COLORS, bgColor, col => {
+e.stopPropagation();
+const strip = document.getElementById("bgStripPalette");
+if (strip.classList.contains("open")) { closeAllDropdowns(); return; }
+openStripPalette(strip, PALETTE_COLORS, bgColor, col => {
 bgColor = col;
 document.getElementById("bgCircle").style.background = col;
 redraw();
-  });
+});
 };
 function showClipboardStatus(msg) {
-  const el = document.getElementById("clipboardStatus");
-  el.textContent = msg;
-  el.classList.add("show");
-  clearTimeout(el._timer);
-  el._timer = setTimeout(() => el.classList.remove("show"), 1800);
+const el = document.getElementById("clipboardStatus");
+el.textContent = msg;
+el.classList.add("show");
+clearTimeout(el._timer);
+el._timer = setTimeout(() => el.classList.remove("show"), 1800);
 }
 function svgIcon(d, w, h) {
-  w = w || 18; h = h || 18;
-  return `<svg viewBox="0 0 24 24" width="${w}" height="${h}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+w = w || 18; h = h || 18;
+return `<svg viewBox="0 0 24 24" width="${w}" height="${h}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 }
-const ICON_UP   = svgIcon('<polyline points="18 15 12 9 6 15"/>');
+const ICON_UP = svgIcon('<polyline points="18 15 12 9 6 15"/>');
 const ICON_DOWN = svgIcon('<polyline points="6 9 12 15 18 9"/>');
-const ICON_EYE  = svgIcon('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>');
+const ICON_EYE= svgIcon('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>');
 const ICON_EYE_OFF = svgIcon('<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>');
-const ICON_DEL  = svgIcon('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>');
+const ICON_DEL= svgIcon('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>');
 function makeLayerActionBtn(iconHtml, extraClass) {
-  const btn = document.createElement("div");
-  btn.className = "layer-action-btn" + (extraClass ? " " + extraClass : "");
-  btn.innerHTML = iconHtml;
-  return btn;
+const btn = document.createElement("div");
+btn.className = "layer-action-btn" + (extraClass ? " " + extraClass : "");
+btn.innerHTML = iconHtml;
+return btn;
 }
 function _buildPaintThumb(layer) {
-  const tc = document.createElement("canvas");
-  tc.width = tc.height = 28;
-  const tctx = tc.getContext("2d");
-  const keys = Object.keys(layer.chunks);
-  if (keys.length) {
+const tc = document.createElement("canvas");
+tc.width = tc.height = 28;
+const tctx = tc.getContext("2d");
+const keys = Object.keys(layer.chunks);
+if (keys.length) {
 let minCx = Infinity, minCy = Infinity, maxCx = -Infinity, maxCy = -Infinity;
 keys.forEach(k => {
-  const [cx, cy] = k.split(",").map(Number);
-  minCx = Math.min(minCx, cx); minCy = Math.min(minCy, cy);
-  maxCx = Math.max(maxCx, cx); maxCy = Math.max(maxCy, cy);
+const [cx, cy] = k.split(",").map(Number);
+minCx = Math.min(minCx, cx); minCy = Math.min(minCy, cy);
+maxCx = Math.max(maxCx, cx); maxCy = Math.max(maxCy, cy);
 });
 const totalW = (maxCx - minCx + 1) * CHUNK_SIZE;
 const totalH = (maxCy - minCy + 1) * CHUNK_SIZE;
 const thumbScale = Math.min(28 / totalW, 28 / totalH, 1);
 keys.forEach(k => {
-  const chunk = layer.chunks[k];
-  tctx.drawImage(chunk.canvas,
+const chunk = layer.chunks[k];
+tctx.drawImage(chunk.canvas,
 (chunk.cx - minCx) * CHUNK_SIZE * thumbScale,
 (chunk.cy - minCy) * CHUNK_SIZE * thumbScale,
 CHUNK_SIZE * thumbScale, CHUNK_SIZE * thumbScale);
 });
-  }
-  layer._thumbCache = { canvas: tc, chunkCount: keys.length };
-  return tc;
+}
+layer._thumbCache = { canvas: tc, chunkCount: keys.length };
+return tc;
 }
 function _buildImageThumb(layer) {
-  const tc = document.createElement("canvas");
-  tc.width = tc.height = 28;
-  const tctx = tc.getContext("2d");
-  const ratio = Math.min(28 / layer.img.width, 28 / layer.img.height);
-  const tw = layer.img.width * ratio, th = layer.img.height * ratio;
-  tctx.drawImage(layer.img, (28 - tw) / 2, (28 - th) / 2, tw, th);
-  layer._thumbCache = { canvas: tc };
-  return tc;
+const tc = document.createElement("canvas");
+tc.width = tc.height = 28;
+const tctx = tc.getContext("2d");
+const ratio = Math.min(28 / layer.img.width, 28 / layer.img.height);
+const tw = layer.img.width * ratio, th = layer.img.height * ratio;
+tctx.drawImage(layer.img, (28 - tw) / 2, (28 - th) / 2, tw, th);
+layer._thumbCache = { canvas: tc };
+return tc;
 }
 function getLayerThumb(layer) {
-  if (layer.type === "paint") {
+if (layer.type === "paint") {
 const keys = Object.keys(layer.chunks);
 if (!layer._thumbCache || layer._thumbCache.chunkCount !== keys.length) return _buildPaintThumb(layer);
 return layer._thumbCache.canvas;
-  }
-  return layer._thumbCache ? layer._thumbCache.canvas : _buildImageThumb(layer);
+}
+return layer._thumbCache ? layer._thumbCache.canvas : _buildImageThumb(layer);
 }
 function invalidateLayerThumb(layer) { if (layer) layer._thumbCache = null; }
 function startLayerRename(div, layer, labelEl) {
-  const input = document.createElement("input");
-  input.className = "layer-label-edit";
-  input.value = layer.name;
-  labelEl.replaceWith(input);
-  input.focus(); input.select();
-  const commit = () => { const v = input.value.trim(); if (v) layer.name = v; refreshLayersPanel(); };
-  input.addEventListener("blur", commit);
-  input.addEventListener("keydown", e => {
+const input = document.createElement("input");
+input.className = "layer-label-edit";
+input.value = layer.name;
+labelEl.replaceWith(input);
+input.focus(); input.select();
+const commit = () => { const v = input.value.trim(); if (v) layer.name = v; refreshLayersPanel(); };
+input.addEventListener("blur", commit);
+input.addEventListener("keydown", e => {
 if (e.key === "Enter") input.blur();
 if (e.key === "Escape") { input.removeEventListener("blur", commit); refreshLayersPanel(); }
 e.stopPropagation();
-  });
+});
 }
 function refreshLayersPanel() {
-  layersList.innerHTML = "";
-  const header = document.getElementById("layersPanelHeader");
-  if (!layers.length) {
+layersList.innerHTML = "";
+const header = document.getElementById("layersPanelHeader");
+if (!layers.length) {
 layersList.style.display = "none";
 header.style.borderBottom = "none";
 updateToolbarState();
 return;
-  }
-  layersList.style.display = "";
-  header.style.borderBottom = "";
-  for (let i = layers.length - 1; i >= 0; i--) {
-const layer  = layers[i];
+}
+layersList.style.display = "";
+header.style.borderBottom = "";
+for (let i = layers.length - 1; i >= 0; i--) {
+const layer= layers[i];
 const isActive = i === activePaintLayerIndex || i === selectedImageLayerIndex;
 const div = document.createElement("div");
 div.className = "layer-item" + (isActive ? " active" : "");
@@ -843,65 +870,60 @@ label.className = "layer-label";
 label.textContent = layer.name;
 nameCell.appendChild(label);
 nameCell.onclick = e => { e.stopPropagation(); startLayerRename(div, layer, label); };
-const upBtn  = makeLayerActionBtn(ICON_UP);
+const upBtn= makeLayerActionBtn(ICON_UP);
 const downBtn = makeLayerActionBtn(ICON_DOWN);
 const visBtn = makeLayerActionBtn(layer.visible ? ICON_EYE : ICON_EYE_OFF);
 const delBtn = makeLayerActionBtn(ICON_DEL, "del-btn");
 if (i >= layers.length - 1) upBtn.classList.add("disabled");
-if (i <= 0)  downBtn.classList.add("disabled");
-if (!layer.visible)  visBtn.style.opacity = "0.35";
-upBtn.onclick   = e => { e.stopPropagation(); moveLayer(i, i + 1); };
+if (i <= 0)downBtn.classList.add("disabled");
+if (!layer.visible)visBtn.style.opacity = "0.35";
+upBtn.onclick = e => { e.stopPropagation(); moveLayer(i, i + 1); };
 downBtn.onclick = e => { e.stopPropagation(); moveLayer(i, i - 1); };
-visBtn.onclick  = e => { e.stopPropagation(); layer.visible = !layer.visible; refreshLayersPanel(); redraw(); };
-delBtn.onclick  = e => {
-  e.stopPropagation();
-  layers.splice(i, 1);
-  if (activePaintLayerIndex === i)   activePaintLayerIndex = null;
-  else if (activePaintLayerIndex > i)activePaintLayerIndex--;
-  if (selectedImageLayerIndex === i) selectedImageLayerIndex = null;
-  else if (selectedImageLayerIndex > i)  selectedImageLayerIndex--;
-  refreshLayersPanel(); redraw();
+visBtn.onclick= e => { e.stopPropagation(); layer.visible = !layer.visible; refreshLayersPanel(); redraw(); };
+delBtn.onclick= e => {
+e.stopPropagation();
+layers.splice(i, 1);
+if (activePaintLayerIndex === i) activePaintLayerIndex = null;
+else if (activePaintLayerIndex > i)activePaintLayerIndex--;
+if (selectedImageLayerIndex === i) selectedImageLayerIndex = null;
+else if (selectedImageLayerIndex > i)selectedImageLayerIndex--;
+refreshLayersPanel(); redraw();
 };
 div.append(thumbCell, nameCell, upBtn, downBtn, visBtn, delBtn);
 layersList.appendChild(div);
-  }
-  updateToolbarState();
+}
+updateToolbarState();
 }
 function selectLayer(realI, layer) {
-  if (layer.type === "paint") { activePaintLayerIndex = realI; selectedImageLayerIndex = null; }
-  else{ selectedImageLayerIndex = realI; activePaintLayerIndex = null; }
-  refreshLayersPanel(); redraw(); updateToolbarState();
+if (layer.type === "paint") { activePaintLayerIndex = realI; selectedImageLayerIndex = null; }
+else{ selectedImageLayerIndex = realI; activePaintLayerIndex = null; }
+refreshLayersPanel(); redraw(); updateToolbarState();
 }
 function moveLayer(from, to) {
-  if (to < 0 || to >= layers.length) return;
-  [layers[from], layers[to]] = [layers[to], layers[from]];
-  if (activePaintLayerIndex === from)  activePaintLayerIndex = to;
-  else if (activePaintLayerIndex === to)   activePaintLayerIndex = from;
-  if (selectedImageLayerIndex === from)selectedImageLayerIndex = to;
-  else if (selectedImageLayerIndex === to) selectedImageLayerIndex = from;
-  refreshLayersPanel(); redraw();
+if (to < 0 || to >= layers.length) return;
+[layers[from], layers[to]] = [layers[to], layers[from]];
+if (activePaintLayerIndex === from)activePaintLayerIndex = to;
+else if (activePaintLayerIndex === to) activePaintLayerIndex = from;
+if (selectedImageLayerIndex === from)selectedImageLayerIndex = to;
+else if (selectedImageLayerIndex === to) selectedImageLayerIndex = from;
+refreshLayersPanel(); redraw();
 }
 document.getElementById("addPaintLayer").onclick = () => addPaintLayer();
 document.getElementById("uploadImageLayer").onclick = () => document.getElementById("uploadImageInput").click();
 document.getElementById("uploadImageInput").onchange = e => {
-  const file = e.target.files[0];
-  if (!file || !file.type.startsWith("image/")) return;
-  const img = new Image();
-  img.onload = () => addImageLayer(img, toTrueX(canvas.width / 2 - img.width / 2), toTrueY(canvas.height / 2 - img.height / 2), file.name);
-  img.src = URL.createObjectURL(file);
-  e.target.value = "";
+const file = e.target.files[0];
+if (!file || !file.type.startsWith("image/")) return;
+const img = new Image();
+img.onload = () => addImageLayer(img, toTrueX(canvas.width / 2 - img.width / 2), toTrueY(canvas.height / 2 - img.height / 2), file.name);
+img.src = URL.createObjectURL(file);
+e.target.value = "";
 };
-canvas.addEventListener("pointerdown", e => {
-  if (activePointerId !== null && activePointerId !== e.pointerId) activePointerId = null;
-  activePointerId = e.pointerId;
-  canvas.setPointerCapture?.(e.pointerId);
-  cursorX = prevX = e.pageX; cursorY = prevY = e.pageY;
-  if (e.button === 1) { middleDown = true; return; }
-  if (e.button !== 0) return;
-  leftDown = true;
-  const tx = toTrueX(cursorX), ty = toTrueY(cursorY);
-  if (pasteGhost) { commitPasteGhost(); return; }  
-  if (currentTool === "cropExport") {
+function handleDown(screenX, screenY) {
+cursorX = prevX = screenX; cursorY = prevY = screenY;
+leftDown = true;
+const tx = toTrueX(cursorX), ty = toTrueY(cursorY);
+if (pasteGhost) { commitPasteGhost(); return; }
+if (currentTool === "cropExport") {
 cropSelectedCells = [];
 updateCropExportOverlay(); updateCropDownloadBtn();
 cropExportStart = { x: tx, y: ty };
@@ -909,24 +931,24 @@ cropExportDragging = false;
 cropExportDownX = cursorX; cropExportDownY = cursorY;
 drawDottedRectPreview(cursorX, cursorY, cursorX, cursorY);
 return;
-  }
-  if (currentTool === "select") {
+}
+if (currentTool === "select") {
 if (selectRect && tx >= selectRect.x && tx <= selectRect.x + selectRect.w &&
 ty >= selectRect.y && ty <= selectRect.y + selectRect.h) {
-  selectMoving = true;
-  selectMoveOffset = { x: tx - selectRect.x, y: ty - selectRect.y };
-  if (activePaintLayerIndex !== null) {
+selectMoving = true;
+selectMoveOffset = { x: tx - selectRect.x, y: ty - selectRect.y };
+if (activePaintLayerIndex !== null) {
 const layer = layers[activePaintLayerIndex];
 if (layer && layer.type === "paint") {
-  if (!floatingSel) captureSelectionPixels();
-  if (floatingSel && !floatingSel.erased) {
+if (!floatingSel) captureSelectionPixels();
+if (floatingSel && !floatingSel.erased) {
 floatingSel.erased = true;
 const rx = floatingSel.origX, ry = floatingSel.origY;
 const rw = floatingSel.w, rh = floatingSel.h;
 const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
 const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
 for (let cx = cMinX; cx <= cMaxX; cx++) {
-  for (let cy = cMinY; cy <= cMaxY; cy++) {
+for (let cy = cMinY; cy <= cMaxY; cy++) {
 const key = chunkKey(cx, cy);
 if (!layer.chunks[key]) continue;
 const lctx = layer.chunks[key].ctx;
@@ -935,614 +957,651 @@ const srcY = Math.max(0, ry - cy * CHUNK_SIZE);
 const eraseW = Math.min(CHUNK_SIZE - srcX, rw - (cx * CHUNK_SIZE + srcX - rx));
 const eraseH = Math.min(CHUNK_SIZE - srcY, rh - (cy * CHUNK_SIZE + srcY - ry));
 if (eraseW > 0 && eraseH > 0) lctx.clearRect(srcX, srcY, eraseW, eraseH);
-  }
+}
 }
 redraw();
-  }
 }
-  }
+}
+}
 } else if (!selectStart) {
-  if (floatingSel) commitFloatingSel();
-  selectRect = null;
-  updateSelectOverlay(); updateClipboardBtns();
-  selectStart = { x: tx, y: ty };
-  selectDragMode = false;
-  selectDownX = cursorX; selectDownY = cursorY;
-  drawDottedRectPreview(cursorX, cursorY, cursorX, cursorY);
+if (floatingSel) commitFloatingSel();
+selectRect = null;
+updateSelectOverlay(); updateClipboardBtns();
+selectStart = { x: tx, y: ty };
+selectDragMode = false;
+selectDownX = cursorX; selectDownY = cursorY;
+drawDottedRectPreview(cursorX, cursorY, cursorX, cursorY);
 } else {
-  
-  const tx0 = Math.min(selectStart.x, tx), ty0 = Math.min(selectStart.y, ty);
-  const tx1 = Math.max(selectStart.x, tx), ty1 = Math.max(selectStart.y, ty);
-  selectRect = (tx1 - tx0 > 2 && ty1 - ty0 > 2) ? { x: tx0, y: ty0, w: tx1 - tx0, h: ty1 - ty0 } : null;
-  selectStart = null; selectDragMode = false;
-  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-  updateSelectOverlay();
-  if (selectRect) captureSelectionPixels();
-  updateClipboardBtns();
+const tx0 = Math.min(selectStart.x, tx), ty0 = Math.min(selectStart.y, ty);
+const tx1 = Math.max(selectStart.x, tx), ty1 = Math.max(selectStart.y, ty);
+selectRect = (tx1 - tx0 > 2 && ty1 - ty0 > 2) ? { x: tx0, y: ty0, w: tx1 - tx0, h: ty1 - ty0 } : null;
+selectStart = null; selectDragMode = false;
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+updateSelectOverlay();
+if (selectRect) captureSelectionPixels();
+updateClipboardBtns();
 }
 return;
-  }
-  if (selectedImageLayerIndex !== null) {
+}
+if (selectedImageLayerIndex !== null) {
 const layer = layers[selectedImageLayerIndex];
 if (layer) {
-  const w = layer.img.width * layer.scale, h = layer.img.height * layer.scale;
-  if (tx >= layer.x && tx <= layer.x + w && ty >= layer.y && ty <= layer.y + h) {
+const w = layer.img.width * layer.scale, h = layer.img.height * layer.scale;
+if (tx >= layer.x && tx <= layer.x + w && ty >= layer.y && ty <= layer.y + h) {
 draggingImage = true;
 dragOffset = { x: tx - layer.x, y: ty - layer.y };
 imageDragStart = { index: selectedImageLayerIndex, fromX: layer.x, fromY: layer.y };
 return;
-  }
 }
-  }
-  if (currentTool === "line") {
+}
+}
+if (currentTool === "line") {
 if (activePaintLayerIndex === null) return;
 if (!polylinePoints.length) {
-  polylinePoints.push({ x: tx, y: ty });
-  shapeDragMode = false; shapeDownX = cursorX; shapeDownY = cursorY;
-  document.getElementById("polylineIndicator").style.display = "block";
-  drawPolylinePreview(cursorX, cursorY);
+polylinePoints.push({ x: tx, y: ty });
+shapeDragMode = false; shapeDownX = cursorX; shapeDownY = cursorY;
+document.getElementById("polylineIndicator").style.display = "block";
+drawPolylinePreview(cursorX, cursorY);
 } else {
-  const start = polylinePoints[0];
-  const layer = layers[activePaintLayerIndex];
-  if (layer?.type === "paint") drawShapeOnLayer(layer, "line", start.x, start.y, tx, ty, brushColor, brushSize, null);
-  polylinePoints = []; shapeDragMode = false;
-  document.getElementById("polylineIndicator").style.display = "none";
-  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-  redraw();
+const start = polylinePoints[0];
+const layer = layers[activePaintLayerIndex];
+if (layer?.type === "paint") drawShapeOnLayer(layer, "line", start.x, start.y, tx, ty, brushColor, brushSize, null);
+polylinePoints = []; shapeDragMode = false;
+document.getElementById("polylineIndicator").style.display = "none";
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+redraw();
 }
 return;
-  }
-  if (["rect","circle"].includes(currentTool)) {
+}
+if (["rect","circle"].includes(currentTool)) {
 if (activePaintLayerIndex === null) return;
 if (!shapeStart) {
-  shapeStart = { x: tx, y: ty };
-  shapeDragMode = false; shapeDownX = cursorX; shapeDownY = cursorY;
+shapeStart = { x: tx, y: ty };
+shapeDragMode = false; shapeDownX = cursorX; shapeDownY = cursorY;
 } else {
-  const layer = layers[activePaintLayerIndex];
-  if (layer?.type === "paint") {
+const layer = layers[activePaintLayerIndex];
+if (layer?.type === "paint") {
 const sx = shapeStart.x, sy = shapeStart.y;
 let extra = null;
 if (currentTool === "circle") {
-  const sc = getCircleFromDrag(toScreenX(sx), toScreenY(sy), cursorX, cursorY);
-  extra = { cx: toTrueX(sc.cx), cy: toTrueY(sc.cy), r: sc.r / scale };
+const sc = getCircleFromDrag(toScreenX(sx), toScreenY(sy), cursorX, cursorY);
+extra = { cx: toTrueX(sc.cx), cy: toTrueY(sc.cy), r: sc.r / scale };
 }
 drawShapeOnLayer(layer, currentTool, sx, sy, tx, ty, brushColor, brushSize, extra);
-  }
-  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-  shapeStart = null; shapeDragMode = false; redraw();
+}
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+shapeStart = null; shapeDragMode = false; redraw();
 }
 return;
-  }
-  if (currentTool === "brush" || currentTool === "eraser") {
-if (activePaintLayerIndex === null) return;
-currentStroke = { tool: currentTool, color: brushColor, size: brushSize, segments: [] };
-drawOnActiveLayer(tx, ty, tx, ty, currentTool, brushColor, brushSize);
-if (!_dirtyRAF) _dirtyRAF = requestAnimationFrame(() => { _dirtyRAF = null; redraw(); });
-  }
-});
-canvas.addEventListener("pointermove", e => {
-  if (activePointerId !== e.pointerId) return;
-  cursorX = e.pageX; cursorY = e.pageY;
-  const tx = toTrueX(cursorX), ty = toTrueY(cursorY);
-  if (middleDown) {
-offsetX += (cursorX - prevX) / scale;
-offsetY += (cursorY - prevY) / scale;
-redraw();
-if (shapeStart && ["rect","circle"].includes(currentTool))
-  drawShapePreview(toScreenX(shapeStart.x), toScreenY(shapeStart.y), cursorX, cursorY);
-if (currentTool === "line" && polylinePoints.length > 0) drawPolylinePreview(cursorX, cursorY);
+}
+}
+function handleMove(screenX, screenY) {
+cursorX = screenX; cursorY = screenY;
+const tx = toTrueX(cursorX), ty = toTrueY(cursorY);
+if (leftDown && currentTool === "cropExport" && cropExportStart) {
+const dx = cursorX - cropExportDownX, dy = cursorY - cropExportDownY;
+if (!cropExportDragging && Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) cropExportDragging = true;
+if (cropExportDragging)
+drawDottedRectPreview(toScreenX(cropExportStart.x), toScreenY(cropExportStart.y), cursorX, cursorY);
 prevX = cursorX; prevY = cursorY; return;
-  }
-  
-  if (leftDown && !shapeDragMode) {
+}
+if (leftDown && !shapeDragMode) {
 const dx = cursorX - shapeDownX, dy = cursorY - shapeDownY;
 if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
-  if ((currentTool === "line" && polylinePoints.length > 0) ||
-  (["rect","circle"].includes(currentTool) && shapeStart)) shapeDragMode = true;
+if ((currentTool === "line" && polylinePoints.length > 0) ||
+(["rect","circle"].includes(currentTool) && shapeStart)) shapeDragMode = true;
 }
-  }
-  if (leftDown && currentTool === "select") {
+}
+if (leftDown && currentTool === "select") {
 if (selectMoving && selectRect) {
-  selectRect = { x: tx - selectMoveOffset.x, y: ty - selectMoveOffset.y, w: selectRect.w, h: selectRect.h };
-  updateSelectOverlay(); redraw();
-  prevX = cursorX; prevY = cursorY; return;
+selectRect = { x: tx - selectMoveOffset.x, y: ty - selectMoveOffset.y, w: selectRect.w, h: selectRect.h };
+updateSelectOverlay(); redraw();
+prevX = cursorX; prevY = cursorY; return;
 }
 if (selectStart && !selectDragMode) {
-  const dx = cursorX - selectDownX, dy = cursorY - selectDownY;
-  if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) selectDragMode = true;
+const dx = cursorX - selectDownX, dy = cursorY - selectDownY;
+if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) selectDragMode = true;
 }
 if (selectStart) {
-  drawDottedRectPreview(toScreenX(selectStart.x), toScreenY(selectStart.y), cursorX, cursorY);
-  prevX = cursorX; prevY = cursorY; return;
+drawDottedRectPreview(toScreenX(selectStart.x), toScreenY(selectStart.y), cursorX, cursorY);
+prevX = cursorX; prevY = cursorY; return;
 }
 if (selectDragStart) {
-  const tx0 = Math.min(selectDragStart.x, tx), ty0 = Math.min(selectDragStart.y, ty);
-  selectRect = { x: tx0, y: ty0, w: Math.max(selectDragStart.x, tx) - tx0, h: Math.max(selectDragStart.y, ty) - ty0 };
-  updateSelectOverlay(); prevX = cursorX; prevY = cursorY; return;
+const tx0 = Math.min(selectDragStart.x, tx), ty0 = Math.min(selectDragStart.y, ty);
+selectRect = { x: tx0, y: ty0, w: Math.max(selectDragStart.x, tx) - tx0, h: Math.max(selectDragStart.y, ty) - ty0 };
+updateSelectOverlay(); prevX = cursorX; prevY = cursorY; return;
 }
-  }
-  if (draggingImage && selectedImageLayerIndex !== null) {
+}
+if (draggingImage && selectedImageLayerIndex !== null) {
 const layer = layers[selectedImageLayerIndex];
 if (layer) { layer.x = tx - dragOffset.x; layer.y = ty - dragOffset.y; }
 if (!_imageDragRAF) _imageDragRAF = requestAnimationFrame(() => { _imageDragRAF = null; refreshLayersPanel(); redraw(); });
 prevX = cursorX; prevY = cursorY; return;
-  }
-  if (currentTool === "line" && polylinePoints.length > 0) {
+}
+if (currentTool === "line" && polylinePoints.length > 0) {
 drawPolylinePreview(cursorX, cursorY); prevX = cursorX; prevY = cursorY; return;
-  }
-  if (shapeStart && ["rect","circle"].includes(currentTool)) {
+}
+if (shapeStart && ["rect","circle"].includes(currentTool)) {
 drawShapePreview(toScreenX(shapeStart.x), toScreenY(shapeStart.y), cursorX, cursorY);
 prevX = cursorX; prevY = cursorY; return;
-  }
-  if (leftDown && (currentTool === "brush" || currentTool === "eraser")) {
+}
+if (pasteGhost) {
+pasteGhost.tx = tx - pasteGhost.offX;
+pasteGhost.ty = ty - pasteGhost.offY;
+if (!_dirtyRAF) _dirtyRAF = requestAnimationFrame(() => { _dirtyRAF = null; redraw(); });
+}
+prevX = cursorX; prevY = cursorY;
+}
+function handleUp(screenX, screenY, isTouch) {
+leftDown = false;
+cursorX = screenX; cursorY = screenY;
+const tx = toTrueX(cursorX), ty = toTrueY(cursorY);
+if (shapeDragMode) {
+if (currentTool === "line" && polylinePoints.length > 0 && activePaintLayerIndex !== null) {
+const layer = layers[activePaintLayerIndex];
+if (layer?.type === "paint")
+drawShapeOnLayer(layer, "line", polylinePoints[0].x, polylinePoints[0].y, tx, ty, brushColor, brushSize, null);
+polylinePoints = []; shapeDragMode = false;
+document.getElementById("polylineIndicator").style.display = "none";
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+redraw();
+} else if (["rect","circle"].includes(currentTool) && shapeStart && activePaintLayerIndex !== null) {
+const layer = layers[activePaintLayerIndex];
+if (layer?.type === "paint") {
+let extra = null;
+if (currentTool === "circle") {
+const sc = getCircleFromDrag(toScreenX(shapeStart.x), toScreenY(shapeStart.y), cursorX, cursorY);
+extra = { cx: toTrueX(sc.cx), cy: toTrueY(sc.cy), r: sc.r / scale };
+}
+drawShapeOnLayer(layer, currentTool, shapeStart.x, shapeStart.y, tx, ty, brushColor, brushSize, extra);
+}
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+shapeStart = null; shapeDragMode = false; redraw();
+} else {
+shapeDragMode = false;
+}
+}
+if (draggingImage) { draggingImage = false; imageDragStart = null; }
+if (currentTool === "select" && (selectDragStart || selectMoving || selectStart)) {
+const wasMoving = selectMoving;
+selectDragStart = null; selectMoving = false;
+if (selectStart) {
+const movedEnough = selectDragMode ||
+(isTouch && (Math.abs(cursorX - selectDownX) > 2 || Math.abs(cursorY - selectDownY) > 2));
+if (movedEnough) {
+const tx0 = Math.min(selectStart.x, tx), ty0 = Math.min(selectStart.y, ty);
+const tx1 = Math.max(selectStart.x, tx), ty1 = Math.max(selectStart.y, ty);
+selectRect = (tx1 - tx0 > 2 && ty1 - ty0 > 2) ? { x: tx0, y: ty0, w: tx1 - tx0, h: ty1 - ty0 } : null;
+selectStart = null; selectDragMode = false;
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+updateSelectOverlay();
+if (selectRect) captureSelectionPixels();
+redraw();
+}
+} else if (!selectRect || (!wasMoving && selectRect.w < 2 && selectRect.h < 2)) {
+if (floatingSel) commitFloatingSel();
+selectRect = null; updateSelectOverlay();
+} else if (wasMoving) {
+redraw();
+}
+updateClipboardBtns();
+}
+if (currentStroke) { currentStroke = null; redraw(); }
+if (currentTool === "cropExport" && cropExportStart) {
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+if (cropExportDragging) {
+const tx0 = Math.min(cropExportStart.x, tx), ty0 = Math.min(cropExportStart.y, ty);
+cropSelectedCells = getCellsInRect(tx0, ty0, Math.max(cropExportStart.x, tx), Math.max(cropExportStart.y, ty));
+} else {
+cropSelectedCells = [{ gx: Math.floor(tx / EXPORT_GRID) * EXPORT_GRID, gy: Math.floor(ty / EXPORT_GRID) * EXPORT_GRID }];
+}
+updateCropExportOverlay(); updateCropDownloadBtn();
+cropExportStart = null; cropExportDragging = false;
+}
+}
+canvas.addEventListener("pointerdown", e => {
+if (e.pointerType === "touch") return; 
+if (activePointerId !== null && activePointerId !== e.pointerId) activePointerId = null;
+activePointerId = e.pointerId;
+canvas.setPointerCapture?.(e.pointerId);
+if (e.button === 1) { middleDown = true; cursorX = prevX = e.pageX; cursorY = prevY = e.pageY; return; }
+if (e.button !== 0) return;
+if (currentTool === "brush" || currentTool === "eraser") {
+cursorX = prevX = e.pageX; cursorY = prevY = e.pageY;
+leftDown = true;
+if (activePaintLayerIndex === null) return;
+currentStroke = { tool: currentTool, color: brushColor, size: brushSize, segments: [] };
+drawOnActiveLayer(toTrueX(cursorX), toTrueY(cursorY), toTrueX(cursorX), toTrueY(cursorY), currentTool, brushColor, brushSize);
+if (!_dirtyRAF) _dirtyRAF = requestAnimationFrame(() => { _dirtyRAF = null; redraw(); });
+return;
+}
+handleDown(e.pageX, e.pageY);
+});
+canvas.addEventListener("pointermove", e => {
+if (e.pointerType === "touch") return;
+if (activePointerId !== e.pointerId) return;
+if (middleDown) {
+cursorX = e.pageX; cursorY = e.pageY;
+offsetX += (cursorX - prevX) / scale;
+offsetY += (cursorY - prevY) / scale;
+redraw();
+if (shapeStart && ["rect","circle"].includes(currentTool))
+drawShapePreview(toScreenX(shapeStart.x), toScreenY(shapeStart.y), cursorX, cursorY);
+if (currentTool === "line" && polylinePoints.length > 0) drawPolylinePreview(cursorX, cursorY);
+prevX = cursorX; prevY = cursorY; return;
+}
+if (leftDown && (currentTool === "brush" || currentTool === "eraser")) {
 if (activePaintLayerIndex !== null) {
-  const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
-  for (const ce of events) {
+const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+for (const ce of events) {
 const cx_ = ce.pageX, cy_ = ce.pageY;
 _cursorMouseX = cx_; _cursorMouseY = cy_;
 drawOnActiveLayer(toTrueX(prevX), toTrueY(prevY), toTrueX(cx_), toTrueY(cy_), currentTool, brushColor, brushSize);
 if (currentStroke) currentStroke.segments.push({ x0: toTrueX(prevX), y0: toTrueY(prevY), x1: toTrueX(cx_), y1: toTrueY(cy_) });
 prevX = cx_; prevY = cy_;
-  }
-  if (!_dirtyRAF) _dirtyRAF = requestAnimationFrame(() => { _dirtyRAF = null; redraw(); });
+}
+if (!_dirtyRAF) _dirtyRAF = requestAnimationFrame(() => { _dirtyRAF = null; redraw(); });
 }
 scheduleCursorDraw(); return;
-  }
-  
-  if (pasteGhost) {
-pasteGhost.tx = tx - pasteGhost.offX;
-pasteGhost.ty = ty - pasteGhost.offY;
-if (!_dirtyRAF) _dirtyRAF = requestAnimationFrame(() => { _dirtyRAF = null; redraw(); });
-  }
-  prevX = cursorX; prevY = cursorY;
+}
+handleMove(e.pageX, e.pageY);
 }, { passive: true });
 canvas.addEventListener("pointerup", e => {
-  if (activePointerId !== e.pointerId) return;
-  if (e.button === 1) { middleDown = false; }
-  leftDown = false;
-  if (shapeDragMode) {
-const tx = toTrueX(cursorX), ty = toTrueY(cursorY);
-if (currentTool === "line" && polylinePoints.length > 0 && activePaintLayerIndex !== null) {
-  const layer = layers[activePaintLayerIndex];
-  if (layer?.type === "paint")
-drawShapeOnLayer(layer, "line", polylinePoints[0].x, polylinePoints[0].y, tx, ty, brushColor, brushSize, null);
-  polylinePoints = []; shapeDragMode = false;
-  document.getElementById("polylineIndicator").style.display = "none";
-  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-  redraw();
-} else if (["rect","circle"].includes(currentTool) && shapeStart && activePaintLayerIndex !== null) {
-  const layer = layers[activePaintLayerIndex];
-  if (layer?.type === "paint") {
-let extra = null;
-if (currentTool === "circle") {
-  const sc = getCircleFromDrag(toScreenX(shapeStart.x), toScreenY(shapeStart.y), cursorX, cursorY);
-  extra = { cx: toTrueX(sc.cx), cy: toTrueY(sc.cy), r: sc.r / scale };
-}
-drawShapeOnLayer(layer, currentTool, shapeStart.x, shapeStart.y, tx, ty, brushColor, brushSize, extra);
-  }
-  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-  shapeStart = null; shapeDragMode = false; redraw();
-} else {
-  shapeDragMode = false;
-}
-  }
-  if (draggingImage) { draggingImage = false; imageDragStart = null; }
-  if (currentTool === "select" && (selectDragStart || selectMoving || (selectStart && selectDragMode))) {
-const wasMoving = selectMoving;
-selectDragStart = null; selectMoving = false;
-if (selectStart && selectDragMode) {
-  const tx = toTrueX(cursorX), ty = toTrueY(cursorY);
-  const tx0 = Math.min(selectStart.x, tx), ty0 = Math.min(selectStart.y, ty);
-  const tx1 = Math.max(selectStart.x, tx), ty1 = Math.max(selectStart.y, ty);
-  selectRect = (tx1 - tx0 > 2 && ty1 - ty0 > 2) ? { x: tx0, y: ty0, w: tx1 - tx0, h: ty1 - ty0 } : null;
-  selectStart = null; selectDragMode = false;
-  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-  updateSelectOverlay();
-  if (selectRect) captureSelectionPixels();
-  redraw();
-} else if (!selectRect || (!wasMoving && selectRect.w < 2 && selectRect.h < 2)) {
-  if (floatingSel) commitFloatingSel();
-  selectRect = null; updateSelectOverlay();
-} else if (wasMoving) {
-  redraw();
-}
-updateClipboardBtns();
-  }
-  if (currentStroke) { currentStroke = null; redraw(); }
-  if (currentTool === "cropExport" && cropExportStart) {
-const tx = toTrueX(cursorX), ty = toTrueY(cursorY);
-shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-if (cropExportDragging) {
-  const tx0 = Math.min(cropExportStart.x, tx), ty0 = Math.min(cropExportStart.y, ty);
-  cropSelectedCells = getCellsInRect(tx0, ty0, Math.max(cropExportStart.x, tx), Math.max(cropExportStart.y, ty));
-} else {
-  cropSelectedCells = [{ gx: Math.floor(tx / EXPORT_GRID) * EXPORT_GRID, gy: Math.floor(ty / EXPORT_GRID) * EXPORT_GRID }];
-}
-updateCropExportOverlay(); updateCropDownloadBtn();
-cropExportStart = null; cropExportDragging = false;
-  }
-  try { canvas.releasePointerCapture?.(e.pointerId); } catch {}
-  activePointerId = null;
+if (activePointerId !== e.pointerId) return;
+if (e.button === 1) { middleDown = false; }
+handleUp(e.pageX, e.pageY, false);
+try { canvas.releasePointerCapture?.(e.pointerId); } catch {}
+activePointerId = null;
 });
 canvas.addEventListener("mousemove", e => {
-  cursorX = e.pageX; cursorY = e.pageY;
-  const tx = toTrueX(cursorX), ty = toTrueY(cursorY);
-  if (shapeStart && ["rect","circle"].includes(currentTool))
+cursorX = e.pageX; cursorY = e.pageY;
+const tx = toTrueX(cursorX), ty = toTrueY(cursorY);
+if (shapeStart && ["rect","circle"].includes(currentTool))
 drawShapePreview(toScreenX(shapeStart.x), toScreenY(shapeStart.y), cursorX, cursorY);
-  if (currentTool === "cropExport" && cropExportStart && leftDown) {
+if (currentTool === "cropExport" && cropExportStart && leftDown) {
 const dx = cursorX - cropExportDownX, dy = cursorY - cropExportDownY;
 if (!cropExportDragging && Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) cropExportDragging = true;
 if (cropExportDragging)
-  drawDottedRectPreview(toScreenX(cropExportStart.x), toScreenY(cropExportStart.y), cursorX, cursorY);
-  }
-  if (currentTool === "select" && selectStart && !leftDown)
+drawDottedRectPreview(toScreenX(cropExportStart.x), toScreenY(cropExportStart.y), cursorX, cursorY);
+}
+if (currentTool === "select" && selectStart && !leftDown)
 drawDottedRectPreview(toScreenX(selectStart.x), toScreenY(selectStart.y), cursorX, cursorY);
-  if (currentTool === "line" && polylinePoints.length > 0) drawPolylinePreview(cursorX, cursorY);
-  if (pasteGhost) {
+if (currentTool === "line" && polylinePoints.length > 0) drawPolylinePreview(cursorX, cursorY);
+if (pasteGhost) {
 pasteGhost.tx = tx - pasteGhost.offX;
 pasteGhost.ty = ty - pasteGhost.offY;
 redraw();
-  }
-  if (currentTool === "select" && selectRect && !leftDown) {
+}
+if (currentTool === "select" && selectRect && !leftDown) {
 const inSel = tx >= selectRect.x && tx <= selectRect.x + selectRect.w &&
-  ty >= selectRect.y && ty <= selectRect.y + selectRect.h;
+ty >= selectRect.y && ty <= selectRect.y + selectRect.h;
 canvas.style.cursor = inSel ? "move" : "crosshair";
-  }
+}
 });
 function resetInteractionState() {
-  activePointerId = null; leftDown = false; middleDown = false;
-  draggingImage = false; shapeStart = null; currentStroke = null;
-  shapeDragMode = false; polylinePoints = [];
-  selectMoving = false; selectDragStart = null; selectStart = null; selectDragMode = false;
-  if (floatingSel) commitFloatingSel();
-  cropExportStart = null; cropExportDragging = false;
-  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+activePointerId = null; leftDown = false; middleDown = false;
+draggingImage = false; shapeStart = null; currentStroke = null;
+shapeDragMode = false; polylinePoints = [];
+selectMoving = false; selectDragStart = null; selectStart = null; selectDragMode = false;
+if (floatingSel) commitFloatingSel();
+cropExportStart = null; cropExportDragging = false;
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
 }
 canvas.addEventListener("pointercancel", resetInteractionState);
 window.addEventListener("blur", () => {
-  activePointerId = null; leftDown = false; middleDown = false;
-  draggingImage = false; shapeStart = null; currentStroke = null;
-  shapeDragMode = false;
-  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+activePointerId = null; leftDown = false; middleDown = false;
+draggingImage = false; shapeStart = null; currentStroke = null;
+shapeDragMode = false;
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
 });
 window.addEventListener("mouseup", () => { middleDown = false; });
+document.addEventListener("contextmenu", e => e.preventDefault());
 canvas.onwheel = e => {
-  e.preventDefault();
-  if (selectedImageLayerIndex !== null && layers[selectedImageLayerIndex]) {
+e.preventDefault();
+if (selectedImageLayerIndex !== null && layers[selectedImageLayerIndex]) {
 const layer = layers[selectedImageLayerIndex];
 const mx = toTrueX(e.pageX), my = toTrueY(e.pageY);
 const iw = layer.img.width * layer.scale, ih = layer.img.height * layer.scale;
 const hoveringImage = mx >= layer.x && mx <= layer.x + iw && my >= layer.y && my <= layer.y + ih;
 if (hoveringImage) {
-  const center = { x: layer.x + iw / 2, y: layer.y + ih / 2 };
-  layer.scale = Math.max(0.05, layer.scale + (e.deltaY < 0 ? 0.1 : -0.1));
-  layer.x = center.x - (layer.img.width * layer.scale) / 2;
-  layer.y = center.y - (layer.img.height * layer.scale) / 2;
-  redraw(); return;
+const center = { x: layer.x + iw / 2, y: layer.y + ih / 2 };
+layer.scale = Math.max(0.05, layer.scale + (e.deltaY < 0 ? 0.1 : -0.1));
+layer.x = center.x - (layer.img.width * layer.scale) / 2;
+layer.y = center.y - (layer.img.height * layer.scale) / 2;
+redraw(); return;
 }
-  }
-  const s = -e.deltaY / 500;
-  const MIN_SCALE = Math.min(canvas.clientWidth, canvas.clientHeight) / (EXPORT_GRID * 10);
-  const newScale = Math.max(MIN_SCALE, Math.min(40, scale * (1 + s)));
-  if (newScale === scale) { redraw(); return; }
-  offsetX -= (canvas.clientWidth  / newScale) * ((newScale - scale) / scale) * (e.pageX / canvas.clientWidth);
-  offsetY -= (canvas.clientHeight / newScale) * ((newScale - scale) / scale) * (e.pageY / canvas.clientHeight);
-  scale = newScale;
-  redraw();
-  if (shapeStart && ["rect","circle"].includes(currentTool))
+}
+const s = -e.deltaY / 500;
+const MIN_SCALE = Math.min(canvas.clientWidth, canvas.clientHeight) / (EXPORT_GRID * 10);
+const newScale = Math.max(MIN_SCALE, Math.min(40, scale * (1 + s)));
+if (newScale === scale) { redraw(); return; }
+offsetX -= (canvas.clientWidth/ newScale) * ((newScale - scale) / scale) * (e.pageX / canvas.clientWidth);
+offsetY -= (canvas.clientHeight / newScale) * ((newScale - scale) / scale) * (e.pageY / canvas.clientHeight);
+scale = newScale;
+redraw();
+if (shapeStart && ["rect","circle"].includes(currentTool))
 drawShapePreview(toScreenX(shapeStart.x), toScreenY(shapeStart.y), cursorX, cursorY);
-  if (currentTool === "line" && polylinePoints.length > 0) drawPolylinePreview(cursorX, cursorY);
-  scheduleCursorDraw();
+if (currentTool === "line" && polylinePoints.length > 0) drawPolylinePreview(cursorX, cursorY);
+scheduleCursorDraw();
 };
 function updateSelectOverlay() {
-  selCtx.clearRect(0, 0, selectOverlayCanvas.width, selectOverlayCanvas.height);
-  if (!selectRect) { selectOverlayCanvas.style.display = "none"; return; }
-  selectOverlayCanvas.style.display = "block";
-  selCtx.save();
-  selCtx.strokeStyle = "#7c6dff"; selCtx.lineWidth = 1.5; selCtx.setLineDash([5, 4]);
-  selCtx.strokeRect(toScreenX(selectRect.x), toScreenY(selectRect.y), selectRect.w * scale, selectRect.h * scale);
-  selCtx.setLineDash([]); selCtx.restore();
+selCtx.clearRect(0, 0, selectOverlayCanvas.width, selectOverlayCanvas.height);
+if (!selectRect) { selectOverlayCanvas.style.display = "none"; return; }
+selectOverlayCanvas.style.display = "block";
+selCtx.save();
+selCtx.strokeStyle = "#7c6dff"; selCtx.lineWidth = 1.5; selCtx.setLineDash([5, 4]);
+selCtx.strokeRect(toScreenX(selectRect.x), toScreenY(selectRect.y), selectRect.w * scale, selectRect.h * scale);
+selCtx.setLineDash([]); selCtx.restore();
 }
 function updateClipboardBtns() {
-  const hasSelection = selectRect && selectRect.w > 2 && selectRect.h > 2 && activePaintLayerIndex !== null;
-  const hasCb = clipboard !== null;
-  [["cutBtn", hasSelection], ["copyBtn", hasSelection], ["pasteBtn", hasCb]].forEach(([id, on]) => {
+const hasSelection = selectRect && selectRect.w > 2 && selectRect.h > 2 && activePaintLayerIndex !== null;
+const hasCb = clipboard !== null;
+[["cutBtn", hasSelection], ["copyBtn", hasSelection], ["pasteBtn", hasCb]].forEach(([id, on]) => {
 const btn = document.getElementById(id);
 btn.disabled = !on;
 btn.style.opacity = on ? "1" : "0.35";
 btn.style.pointerEvents = on ? "" : "none";
-  });
+});
 }
 function getCellsInRect(tx0, ty0, tx1, ty1) {
-  const gMinX = Math.floor(tx0 / EXPORT_GRID) * EXPORT_GRID;
-  const gMinY = Math.floor(ty0 / EXPORT_GRID) * EXPORT_GRID;
-  const gMaxX = Math.floor((tx1 - 1) / EXPORT_GRID) * EXPORT_GRID;
-  const gMaxY = Math.floor((ty1 - 1) / EXPORT_GRID) * EXPORT_GRID;
-  const cells = [];
-  for (let gx = gMinX; gx <= gMaxX; gx += EXPORT_GRID)
+const gMinX = Math.floor(tx0 / EXPORT_GRID) * EXPORT_GRID;
+const gMinY = Math.floor(ty0 / EXPORT_GRID) * EXPORT_GRID;
+const gMaxX = Math.floor((tx1 - 1) / EXPORT_GRID) * EXPORT_GRID;
+const gMaxY = Math.floor((ty1 - 1) / EXPORT_GRID) * EXPORT_GRID;
+const cells = [];
+for (let gx = gMinX; gx <= gMaxX; gx += EXPORT_GRID)
 for (let gy = gMinY; gy <= gMaxY; gy += EXPORT_GRID)
-  cells.push({ gx, gy });
-  return cells;
+cells.push({ gx, gy });
+return cells;
 }
 function getCropCellBounds() {
-  let minGX = Infinity, minGY = Infinity, maxGX = -Infinity, maxGY = -Infinity;
-  cropSelectedCells.forEach(({ gx, gy }) => {
+let minGX = Infinity, minGY = Infinity, maxGX = -Infinity, maxGY = -Infinity;
+cropSelectedCells.forEach(({ gx, gy }) => {
 minGX = Math.min(minGX, gx); minGY = Math.min(minGY, gy);
 maxGX = Math.max(maxGX, gx + EXPORT_GRID); maxGY = Math.max(maxGY, gy + EXPORT_GRID);
-  });
-  return { minGX, minGY, maxGX, maxGY };
+});
+return { minGX, minGY, maxGX, maxGY };
 }
 function _cropExceedsLimit() {
-  if (!cropSelectedCells.length) return false;
-  const { minGX, minGY, maxGX, maxGY } = getCropCellBounds();
-  return (maxGX - minGX) > 4096 || (maxGY - minGY) > 4096;
+if (!cropSelectedCells.length) return false;
+const { minGX, minGY, maxGX, maxGY } = getCropCellBounds();
+return (maxGX - minGX) > 4096 || (maxGY - minGY) > 4096;
 }
 function resetCropExport() {
-  cropSelectedCells = []; cropExportStart = null; cropExportDragging = false;
-  updateCropExportOverlay(); updateCropDownloadBtn();
-  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+cropSelectedCells = []; cropExportStart = null; cropExportDragging = false;
+updateCropExportOverlay(); updateCropDownloadBtn();
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
 }
 function updateCropDownloadBtn() {
-  const has = cropSelectedCells.length > 0 && !_cropExceedsLimit();
-  const btn = document.getElementById("cropDownloadBtn");
-  btn.disabled = !has; btn.style.opacity = has ? "1" : "0.35";
+const has = cropSelectedCells.length > 0 && !_cropExceedsLimit();
+const btn = document.getElementById("cropDownloadBtn");
+btn.disabled = !has; btn.style.opacity = has ? "1" : "0.35";
 }
 function updateCropPadLabel() {
-  document.getElementById("cropPadLabel").textContent = getCropPad() + "px";
-  setBtnDisabled(document.getElementById("cropPadDown"), cropPadIdx <= 0);
-  setBtnDisabled(document.getElementById("cropPadUp"),   cropPadIdx >= CROP_PAD_VALUES.length - 1);
+document.getElementById("cropPadLabel").textContent = getCropPad() + "px";
+setBtnDisabled(document.getElementById("cropPadDown"), cropPadIdx <= 0);
+setBtnDisabled(document.getElementById("cropPadUp"), cropPadIdx >= CROP_PAD_VALUES.length - 1);
 }
 function updateCropBgBtn() {
-  const btn = document.getElementById("cropBgBtn");
-  btn.style.color  = cropIncludeBg ? "var(--accent)": "var(--text-dim)";
-  btn.style.background = cropIncludeBg ? "var(--btn-active)" : "";
+const btn = document.getElementById("cropBgBtn");
+btn.style.color= cropIncludeBg ? "var(--accent)": "var(--text-dim)";
+btn.style.background = cropIncludeBg ? "var(--btn-active)" : "";
 }
 function updateCropExportOverlay() {
-  cropSelCtx.clearRect(0, 0, cropExportOverlayCanvas.width, cropExportOverlayCanvas.height);
-  if (!cropSelectedCells.length) { cropExportOverlayCanvas.style.display = "none"; return; }
-  cropExportOverlayCanvas.style.display = "block";
-  const { minGX, minGY, maxGX, maxGY } = getCropCellBounds();
-  const exceeds = (maxGX - minGX) > 4096 || (maxGY - minGY) > 4096;
-  cropSelCtx.save();
-  cropSelCtx.strokeStyle = exceeds ? "#ff453a" : "#7c6dff";
-  cropSelCtx.lineWidth = 1.5; cropSelCtx.setLineDash([5, 4]);
-  cropSelCtx.strokeRect(toScreenX(minGX), toScreenY(minGY), (maxGX - minGX) * scale, (maxGY - minGY) * scale);
-  cropSelCtx.setLineDash([]); cropSelCtx.restore();
+cropSelCtx.clearRect(0, 0, cropExportOverlayCanvas.width, cropExportOverlayCanvas.height);
+if (!cropSelectedCells.length) { cropExportOverlayCanvas.style.display = "none"; return; }
+cropExportOverlayCanvas.style.display = "block";
+const { minGX, minGY, maxGX, maxGY } = getCropCellBounds();
+const exceeds = (maxGX - minGX) > 4096 || (maxGY - minGY) > 4096;
+cropSelCtx.save();
+cropSelCtx.strokeStyle = exceeds ? "#ff453a" : "#7c6dff";
+cropSelCtx.lineWidth = 1.5; cropSelCtx.setLineDash([5, 4]);
+cropSelCtx.strokeRect(toScreenX(minGX), toScreenY(minGY), (maxGX - minGX) * scale, (maxGY - minGY) * scale);
+cropSelCtx.setLineDash([]); cropSelCtx.restore();
 }
 document.getElementById("cropPadDown").addEventListener("click", () => { if (cropPadIdx > 0) cropPadIdx--; updateCropPadLabel(); });
-document.getElementById("cropPadUp").addEventListener("click",   () => { if (cropPadIdx < CROP_PAD_VALUES.length - 1) cropPadIdx++; updateCropPadLabel(); });
-document.getElementById("cropBgBtn").addEventListener("click",   () => { cropIncludeBg = !cropIncludeBg; updateCropBgBtn(); });
+document.getElementById("cropPadUp").addEventListener("click", () => { if (cropPadIdx < CROP_PAD_VALUES.length - 1) cropPadIdx++; updateCropPadLabel(); });
+document.getElementById("cropBgBtn").addEventListener("click", () => { cropIncludeBg = !cropIncludeBg; updateCropBgBtn(); });
 document.getElementById("cropExportBtn").addEventListener("click", () => {
-  if (currentTool === "cropExport") { setTool("brush"); return; }
-  setTool("cropExport");
-  shapePreviewCanvas.style.display = "block";
-  updateCropExportOverlay();
+if (currentTool === "cropExport") { setTool("brush"); return; }
+setTool("cropExport");
+shapePreviewCanvas.style.display = "block";
+updateCropExportOverlay();
 });
 document.getElementById("cropDownloadBtn").addEventListener("click", () => {
-  if (!cropSelectedCells.length || _cropExceedsLimit()) return;
-  const pad = getCropPad();
-  const { minGX, minGY, maxGX, maxGY } = getCropCellBounds();
-  
-  let tight = null;
-  layers.forEach(layer => {
+if (!cropSelectedCells.length || _cropExceedsLimit()) return;
+const pad = getCropPad();
+const { minGX, minGY, maxGX, maxGY } = getCropCellBounds();
+let tight = null;
+layers.forEach(layer => {
 if (!layer.visible) return;
 let t = null;
 if (layer.type === "paint") {
-  t = getTightBoundsInRegion(layer, minGX, minGY, maxGX, maxGY, 0);
+t = getTightBoundsInRegion(layer, minGX, minGY, maxGX, maxGY, 0);
 } else if (layer.type === "image") {
-  const iw = layer.img.width * layer.scale, ih = layer.img.height * layer.scale;
-  const ix0 = Math.max(minGX, layer.x), iy0 = Math.max(minGY, layer.y);
-  const ix1 = Math.min(maxGX, layer.x + iw), iy1 = Math.min(maxGY, layer.y + ih);
-  if (ix1 > ix0 && iy1 > iy0) t = { x: ix0, y: iy0, w: ix1 - ix0, h: iy1 - iy0 };
+const iw = layer.img.width * layer.scale, ih = layer.img.height * layer.scale;
+const ix0 = Math.max(minGX, layer.x), iy0 = Math.max(minGY, layer.y);
+const ix1 = Math.min(maxGX, layer.x + iw), iy1 = Math.min(maxGY, layer.y + ih);
+if (ix1 > ix0 && iy1 > iy0) t = { x: ix0, y: iy0, w: ix1 - ix0, h: iy1 - iy0 };
 }
 if (!t) return;
 if (!tight) { tight = { ...t }; return; }
 const x2 = Math.min(tight.x, t.x), y2 = Math.min(tight.y, t.y);
 const r2 = Math.max(tight.x + tight.w, t.x + t.w), b2 = Math.max(tight.y + tight.h, t.y + t.h);
 tight = { x: x2, y: y2, w: r2 - x2, h: b2 - y2 };
-  });
-  if (!tight) return;
-  
-  
-  const cropX  = tight.x - pad;
-  const cropY  = tight.y - pad;
-  const cropW  = tight.w + pad * 2;
-  const cropH  = tight.h + pad * 2;
-  const renderX0 = Math.min(minGX, cropX);
-  const renderY0 = Math.min(minGY, cropY);
-  const renderX1 = Math.max(maxGX, cropX + cropW);
-  const renderY1 = Math.max(maxGY, cropY + cropH);
-  const out = renderSectionToCanvas(renderX0, renderY0, renderX1, renderY1, cropX, cropY, cropW, cropH, cropIncludeBg);
-  const a = document.createElement("a");
-  a.href = out.toDataURL("image/png");
-  const d = new Date();
-  const p = n => String(n).padStart(2, "0");
-  a.download = `doodly_${p(d.getSeconds())}${p(d.getMinutes())}${p(d.getHours())}${p(d.getDate())}${p(d.getMonth()+1)}${d.getFullYear()}.png`;
-  a.click();
-  resetCropExport();
+});
+if (!tight) return;
+const cropX= tight.x - pad;
+const cropY= tight.y - pad;
+const cropW= tight.w + pad * 2;
+const cropH= tight.h + pad * 2;
+const renderX0 = Math.min(minGX, cropX);
+const renderY0 = Math.min(minGY, cropY);
+const renderX1 = Math.max(maxGX, cropX + cropW);
+const renderY1 = Math.max(maxGY, cropY + cropH);
+const out = renderSectionToCanvas(renderX0, renderY0, renderX1, renderY1, cropX, cropY, cropW, cropH, cropIncludeBg);
+const a = document.createElement("a");
+a.href = out.toDataURL("image/png");
+const d = new Date();
+const p = n => String(n).padStart(2, "0");
+a.download = `doodly_${p(d.getSeconds())}${p(d.getMinutes())}${p(d.getHours())}${p(d.getDate())}${p(d.getMonth()+1)}${d.getFullYear()}.png`;
+a.click();
+resetCropExport();
 });
 function captureSelectionPixels() {
-  if (!selectRect || activePaintLayerIndex === null) return;
-  if (floatingSel) return;
-  const layer = layers[activePaintLayerIndex];
-  if (!layer || layer.type !== "paint") return;
-  const rx = Math.round(selectRect.x), ry = Math.round(selectRect.y);
-  const rw = Math.round(selectRect.w), rh = Math.round(selectRect.h);
-  if (rw < 1 || rh < 1) return;
-  const tmp = document.createElement("canvas");
-  tmp.width = rw; tmp.height = rh;
-  const tc = tmp.getContext("2d");
-  const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
-  const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
-  for (let cx = cMinX; cx <= cMaxX; cx++) {
+if (!selectRect || activePaintLayerIndex === null) return;
+if (floatingSel) return;
+const layer = layers[activePaintLayerIndex];
+if (!layer || layer.type !== "paint") return;
+const rx = Math.round(selectRect.x), ry = Math.round(selectRect.y);
+const rw = Math.round(selectRect.w), rh = Math.round(selectRect.h);
+if (rw < 1 || rh < 1) return;
+const tmp = document.createElement("canvas");
+tmp.width = rw; tmp.height = rh;
+const tc = tmp.getContext("2d");
+const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
+const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
+for (let cx = cMinX; cx <= cMaxX; cx++) {
 for (let cy = cMinY; cy <= cMaxY; cy++) {
-  const key = chunkKey(cx, cy);
-  if (!layer.chunks[key]) continue;
-  const chunk = layer.chunks[key];
-  const srcX = Math.max(0, rx - cx * CHUNK_SIZE);
-  const srcY = Math.max(0, ry - cy * CHUNK_SIZE);
-  const dstX = cx * CHUNK_SIZE + srcX - rx;
-  const dstY = cy * CHUNK_SIZE + srcY - ry;
-  const copyW = Math.min(CHUNK_SIZE - srcX, rw - dstX);
-  const copyH = Math.min(CHUNK_SIZE - srcY, rh - dstY);
-  if (copyW > 0 && copyH > 0)
+const key = chunkKey(cx, cy);
+if (!layer.chunks[key]) continue;
+const chunk = layer.chunks[key];
+const srcX = Math.max(0, rx - cx * CHUNK_SIZE);
+const srcY = Math.max(0, ry - cy * CHUNK_SIZE);
+const dstX = cx * CHUNK_SIZE + srcX - rx;
+const dstY = cy * CHUNK_SIZE + srcY - ry;
+const copyW = Math.min(CHUNK_SIZE - srcX, rw - dstX);
+const copyH = Math.min(CHUNK_SIZE - srcY, rh - dstY);
+if (copyW > 0 && copyH > 0)
 tc.drawImage(chunk.canvas, srcX, srcY, copyW, copyH, dstX, dstY, copyW, copyH);
 }
-  }
-  floatingSel = { tmpCanvas: tmp, w: rw, h: rh, origX: rx, origY: ry, captured: true };
+}
+floatingSel = { tmpCanvas: tmp, w: rw, h: rh, origX: rx, origY: ry, captured: true };
 }
 function selectCopy() {
-  if (!selectRect) return;
-  captureSelectionPixels();
-  if (!floatingSel) return;
-  const rw = floatingSel.w, rh = floatingSel.h;
-  clipboard = { imageData: floatingSel.tmpCanvas.getContext("2d").getImageData(0, 0, rw, rh), x: Math.round(selectRect.x), y: Math.round(selectRect.y), w: rw, h: rh };
-  showClipboardStatus("Copied selection");
-  floatingSel = null; selectRect = null;
-  updateSelectOverlay(); updateClipboardBtns();
+if (!selectRect) return;
+captureSelectionPixels();
+if (!floatingSel) return;
+const rw = floatingSel.w, rh = floatingSel.h;
+clipboard = { imageData: floatingSel.tmpCanvas.getContext("2d").getImageData(0, 0, rw, rh), x: Math.round(selectRect.x), y: Math.round(selectRect.y), w: rw, h: rh };
+showClipboardStatus("Copied selection");
+floatingSel = null; selectRect = null;
+updateSelectOverlay(); updateClipboardBtns();
 }
 function selectCut() {
-  if (!selectRect || activePaintLayerIndex === null) return;
-  const layer = layers[activePaintLayerIndex];
-  if (!layer || layer.type !== "paint") return;
-  captureSelectionPixels();
-  if (!floatingSel) return;
-  const rx = floatingSel.origX, ry = floatingSel.origY;
-  const rw = floatingSel.w, rh = floatingSel.h;
-  clipboard = { imageData: floatingSel.tmpCanvas.getContext("2d").getImageData(0, 0, rw, rh), x: rx, y: ry, w: rw, h: rh };
-  const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
-  const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
-  for (let cx = cMinX; cx <= cMaxX; cx++) {
+if (!selectRect || activePaintLayerIndex === null) return;
+const layer = layers[activePaintLayerIndex];
+if (!layer || layer.type !== "paint") return;
+captureSelectionPixels();
+if (!floatingSel) return;
+const rx = floatingSel.origX, ry = floatingSel.origY;
+const rw = floatingSel.w, rh = floatingSel.h;
+clipboard = { imageData: floatingSel.tmpCanvas.getContext("2d").getImageData(0, 0, rw, rh), x: rx, y: ry, w: rw, h: rh };
+const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
+const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
+for (let cx = cMinX; cx <= cMaxX; cx++) {
 for (let cy = cMinY; cy <= cMaxY; cy++) {
-  const key = chunkKey(cx, cy);
-  if (!layer.chunks[key]) continue;
-  const lctx = layer.chunks[key].ctx;
-  const srcX = Math.max(0, rx - cx * CHUNK_SIZE);
-  const srcY = Math.max(0, ry - cy * CHUNK_SIZE);
-  const eraseW = Math.min(CHUNK_SIZE - srcX, rw - (cx * CHUNK_SIZE + srcX - rx));
-  const eraseH = Math.min(CHUNK_SIZE - srcY, rh - (cy * CHUNK_SIZE + srcY - ry));
-  if (eraseW > 0 && eraseH > 0) lctx.clearRect(srcX, srcY, eraseW, eraseH);
+const key = chunkKey(cx, cy);
+if (!layer.chunks[key]) continue;
+const lctx = layer.chunks[key].ctx;
+const srcX = Math.max(0, rx - cx * CHUNK_SIZE);
+const srcY = Math.max(0, ry - cy * CHUNK_SIZE);
+const eraseW = Math.min(CHUNK_SIZE - srcX, rw - (cx * CHUNK_SIZE + srcX - rx));
+const eraseH = Math.min(CHUNK_SIZE - srcY, rh - (cy * CHUNK_SIZE + srcY - ry));
+if (eraseW > 0 && eraseH > 0) lctx.clearRect(srcX, srcY, eraseW, eraseH);
 }
-  }
-  floatingSel = null; selectRect = null;
-  updateSelectOverlay(); updateClipboardBtns();
-  refreshLayersPanel(); redraw();
-  showClipboardStatus("Cut selection");
+}
+floatingSel = null; selectRect = null;
+updateSelectOverlay(); updateClipboardBtns();
+refreshLayersPanel(); redraw();
+showClipboardStatus("Cut selection");
+}
+let _pendingPaste = false; 
+let _touchPasting = false; 
+function _makePasteGhost(screenX, screenY) {
+if (!clipboard) return;
+const tmp = document.createElement("canvas");
+tmp.width = clipboard.w; tmp.height = clipboard.h;
+tmp.getContext("2d").putImageData(clipboard.imageData, 0, 0);
+const tx = toTrueX(screenX), ty = toTrueY(screenY);
+pasteGhost = { tmpCanvas: tmp, w: clipboard.w, h: clipboard.h,
+  tx: tx - clipboard.w / 2, ty: ty - clipboard.h / 2,
+  offX: clipboard.w / 2, offY: clipboard.h / 2 };
+canvas.style.cursor = "none";
+redraw();
 }
 function selectPaste() {
-  if (!clipboard) { showClipboardStatus("Clipboard empty"); return; }
-  const tmp = document.createElement("canvas");
-  tmp.width = clipboard.w; tmp.height = clipboard.h;
-  tmp.getContext("2d").putImageData(clipboard.imageData, 0, 0);
-  const tx = toTrueX(cursorX), ty = toTrueY(cursorY);
-  pasteGhost = { tmpCanvas: tmp, w: clipboard.w, h: clipboard.h,
-tx: tx - clipboard.w / 2, ty: ty - clipboard.h / 2,
-offX: clipboard.w / 2, offY: clipboard.h / 2 };
-  canvas.style.cursor = "none";
-  redraw();
+if (!clipboard) { showClipboardStatus("Clipboard empty"); return; }
+if (window.matchMedia("(pointer: coarse)").matches) {
+  _pendingPaste = true; _touchPasting = false;
+  pasteGhost = null;
+  showClipboardStatus("Tap canvas to place");
+  return;
+}
+_makePasteGhost(cursorX, cursorY);
 }
 function commitPasteGhost() {
-  if (!pasteGhost) return;
-  let targetIdx = activePaintLayerIndex;
-  if (targetIdx === null) {
+if (!pasteGhost) return;
+let targetIdx = activePaintLayerIndex;
+if (targetIdx === null) {
 const top = layers.map((l, i) => ({ l, i })).filter(x => x.l.type === "paint").pop();
 if (top) targetIdx = top.i;
-  }
-  if (targetIdx === null || !layers[targetIdx] || layers[targetIdx].type !== "paint") {
+}
+if (targetIdx === null || !layers[targetIdx] || layers[targetIdx].type !== "paint") {
 pasteGhost = null; canvas.style.cursor = "default";
 showClipboardStatus("No paint layer active"); return;
-  }
-  const targetLayer = layers[targetIdx];
-  const rx = Math.round(pasteGhost.tx), ry = Math.round(pasteGhost.ty);
-  const rw = pasteGhost.w, rh = pasteGhost.h;
-  const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
-  const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
-  for (let cx = cMinX; cx <= cMaxX; cx++) {
+}
+const targetLayer = layers[targetIdx];
+const rx = Math.round(pasteGhost.tx), ry = Math.round(pasteGhost.ty);
+const rw = pasteGhost.w, rh = pasteGhost.h;
+const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
+const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
+for (let cx = cMinX; cx <= cMaxX; cx++) {
 for (let cy = cMinY; cy <= cMaxY; cy++) {
-  const chunk = getOrCreateChunk(targetLayer, cx, cy);
-  const lctx = chunk.ctx;
-  const dstX = cx * CHUNK_SIZE, dstY = cy * CHUNK_SIZE;
-  const srcX = Math.max(0, dstX - rx), srcY = Math.max(0, dstY - ry);
-  const drawX = Math.max(0, rx - dstX), drawY = Math.max(0, ry - dstY);
-  const copyW = Math.min(rw - srcX, CHUNK_SIZE - drawX);
-  const copyH = Math.min(rh - srcY, CHUNK_SIZE - drawY);
-  if (copyW > 0 && copyH > 0)
+const chunk = getOrCreateChunk(targetLayer, cx, cy);
+const lctx = chunk.ctx;
+const dstX = cx * CHUNK_SIZE, dstY = cy * CHUNK_SIZE;
+const srcX = Math.max(0, dstX - rx), srcY = Math.max(0, dstY - ry);
+const drawX = Math.max(0, rx - dstX), drawY = Math.max(0, ry - dstY);
+const copyW = Math.min(rw - srcX, CHUNK_SIZE - drawX);
+const copyH = Math.min(rh - srcY, CHUNK_SIZE - drawY);
+if (copyW > 0 && copyH > 0)
 lctx.drawImage(pasteGhost.tmpCanvas, srcX, srcY, copyW, copyH, drawX, drawY, copyW, copyH);
 }
-  }
-  pasteGhost = null;
-  canvas.style.cursor = currentTool === "select" ? "crosshair" : "default";
-  activePaintLayerIndex = targetIdx; selectedImageLayerIndex = null;
-  refreshLayersPanel(); redraw(); updateClipboardBtns();
-  showClipboardStatus("Pasted");
+}
+pasteGhost = null;
+canvas.style.cursor = currentTool === "select" ? "crosshair" : "default";
+activePaintLayerIndex = targetIdx; selectedImageLayerIndex = null;
+refreshLayersPanel(); redraw(); updateClipboardBtns();
+showClipboardStatus("Pasted");
 }
 function commitFloatingSel() {
-  if (!floatingSel || !selectRect) { floatingSel = null; return; }
-  if (activePaintLayerIndex === null) { floatingSel = null; return; }
-  const layer = layers[activePaintLayerIndex];
-  if (!layer || layer.type !== "paint") { floatingSel = null; return; }
-  const rx = Math.round(selectRect.x), ry = Math.round(selectRect.y);
-  const rw = floatingSel.w, rh = floatingSel.h;
-  const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
-  const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
-  for (let cx = cMinX; cx <= cMaxX; cx++) {
+if (!floatingSel || !selectRect) { floatingSel = null; return; }
+if (activePaintLayerIndex === null) { floatingSel = null; return; }
+const layer = layers[activePaintLayerIndex];
+if (!layer || layer.type !== "paint") { floatingSel = null; return; }
+const rx = Math.round(selectRect.x), ry = Math.round(selectRect.y);
+const rw = floatingSel.w, rh = floatingSel.h;
+const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
+const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
+for (let cx = cMinX; cx <= cMaxX; cx++) {
 for (let cy = cMinY; cy <= cMaxY; cy++) {
-  const chunk = getOrCreateChunk(layer, cx, cy);
-  const lctx = chunk.ctx;
-  const dstX = cx * CHUNK_SIZE, dstY = cy * CHUNK_SIZE;
-  const srcX = Math.max(0, dstX - rx), srcY = Math.max(0, dstY - ry);
-  const drawX = Math.max(0, rx - dstX), drawY = Math.max(0, ry - dstY);
-  const copyW = Math.min(rw - srcX, CHUNK_SIZE - drawX);
-  const copyH = Math.min(rh - srcY, CHUNK_SIZE - drawY);
-  if (copyW > 0 && copyH > 0)
+const chunk = getOrCreateChunk(layer, cx, cy);
+const lctx = chunk.ctx;
+const dstX = cx * CHUNK_SIZE, dstY = cy * CHUNK_SIZE;
+const srcX = Math.max(0, dstX - rx), srcY = Math.max(0, dstY - ry);
+const drawX = Math.max(0, rx - dstX), drawY = Math.max(0, ry - dstY);
+const copyW = Math.min(rw - srcX, CHUNK_SIZE - drawX);
+const copyH = Math.min(rh - srcY, CHUNK_SIZE - drawY);
+if (copyW > 0 && copyH > 0)
 lctx.drawImage(floatingSel.tmpCanvas, srcX, srcY, copyW, copyH, drawX, drawY, copyW, copyH);
 }
-  }
-  floatingSel = null;
-  refreshLayersPanel(); redraw();
+}
+floatingSel = null;
+refreshLayersPanel(); redraw();
 }
 function selectDelete() {
-  if (!selectRect || activePaintLayerIndex === null) return;
-  const layer = layers[activePaintLayerIndex];
-  if (!layer || layer.type !== "paint") return;
-  captureSelectionPixels();
-  const rx = floatingSel ? floatingSel.origX : Math.round(selectRect.x);
-  const ry = floatingSel ? floatingSel.origY : Math.round(selectRect.y);
-  const rw = floatingSel ? floatingSel.w : Math.round(selectRect.w);
-  const rh = floatingSel ? floatingSel.h : Math.round(selectRect.h);
-  const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
-  const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
-  for (let cx = cMinX; cx <= cMaxX; cx++) {
+if (!selectRect || activePaintLayerIndex === null) return;
+const layer = layers[activePaintLayerIndex];
+if (!layer || layer.type !== "paint") return;
+captureSelectionPixels();
+const rx = floatingSel ? floatingSel.origX : Math.round(selectRect.x);
+const ry = floatingSel ? floatingSel.origY : Math.round(selectRect.y);
+const rw = floatingSel ? floatingSel.w : Math.round(selectRect.w);
+const rh = floatingSel ? floatingSel.h : Math.round(selectRect.h);
+const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
+const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
+for (let cx = cMinX; cx <= cMaxX; cx++) {
 for (let cy = cMinY; cy <= cMaxY; cy++) {
-  const key = chunkKey(cx, cy);
-  if (!layer.chunks[key]) continue;
-  const lctx = layer.chunks[key].ctx;
-  const srcX = Math.max(0, rx - cx * CHUNK_SIZE);
-  const srcY = Math.max(0, ry - cy * CHUNK_SIZE);
-  const eraseW = Math.min(CHUNK_SIZE - srcX, rw - (cx * CHUNK_SIZE + srcX - rx));
-  const eraseH = Math.min(CHUNK_SIZE - srcY, rh - (cy * CHUNK_SIZE + srcY - ry));
-  if (eraseW > 0 && eraseH > 0) lctx.clearRect(srcX, srcY, eraseW, eraseH);
+const key = chunkKey(cx, cy);
+if (!layer.chunks[key]) continue;
+const lctx = layer.chunks[key].ctx;
+const srcX = Math.max(0, rx - cx * CHUNK_SIZE);
+const srcY = Math.max(0, ry - cy * CHUNK_SIZE);
+const eraseW = Math.min(CHUNK_SIZE - srcX, rw - (cx * CHUNK_SIZE + srcX - rx));
+const eraseH = Math.min(CHUNK_SIZE - srcY, rh - (cy * CHUNK_SIZE + srcY - ry));
+if (eraseW > 0 && eraseH > 0) lctx.clearRect(srcX, srcY, eraseW, eraseH);
 }
-  }
-  floatingSel = null; selectRect = null;
-  updateSelectOverlay(); updateClipboardBtns();
-  refreshLayersPanel(); redraw();
 }
-document.getElementById("cutBtn").onclick   = e => { e.stopPropagation(); selectCut();   };
-document.getElementById("copyBtn").onclick  = e => { e.stopPropagation(); selectCopy();  };
+floatingSel = null; selectRect = null;
+updateSelectOverlay(); updateClipboardBtns();
+refreshLayersPanel(); redraw();
+}
+document.getElementById("cutBtn").onclick = e => { e.stopPropagation(); selectCut(); };
+document.getElementById("copyBtn").onclick= e => { e.stopPropagation(); selectCopy();};
 document.getElementById("pasteBtn").onclick = e => { e.stopPropagation(); selectPaste(); };
 document.getElementById("selectBtn").onclick = e => { e.stopPropagation(); setTool("select"); };
-document.getElementById("brushBtn").onclick  = () => setTool("brush");
+document.getElementById("brushBtn").onclick= () => setTool("brush");
 document.getElementById("eraserBtn").onclick = () => setTool("eraser");
-document.getElementById("lineBtn").onclick   = () => setTool("line");
-document.getElementById("rectBtn").onclick   = () => setTool("rect");
+document.getElementById("lineBtn").onclick = () => setTool("line");
+document.getElementById("rectBtn").onclick = () => setTool("rect");
 document.getElementById("circleBtn").onclick = () => setTool("circle");
 function getDrawnBounds() {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  layers.forEach(layer => {
+let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+layers.forEach(layer => {
 if (!layer.visible) return;
 if (layer.type === "paint") {
-  Object.values(layer.chunks).forEach(chunk => {
+Object.values(layer.chunks).forEach(chunk => {
 const d = chunk.ctx.getImageData(0, 0, CHUNK_SIZE, CHUNK_SIZE).data;
 let hasContent = false;
 for (let i = 3; i < d.length; i += 4) { if (d[i] > 0) { hasContent = true; break; } }
@@ -1550,204 +1609,387 @@ if (!hasContent) return;
 minX = Math.min(minX, chunk.cx * CHUNK_SIZE); minY = Math.min(minY, chunk.cy * CHUNK_SIZE);
 maxX = Math.max(maxX, chunk.cx * CHUNK_SIZE + CHUNK_SIZE);
 maxY = Math.max(maxY, chunk.cy * CHUNK_SIZE + CHUNK_SIZE);
-  });
+});
 } else if (layer.type === "image") {
-  const w = layer.img.width * layer.scale, h = layer.img.height * layer.scale;
-  minX = Math.min(minX, layer.x); minY = Math.min(minY, layer.y);
-  maxX = Math.max(maxX, layer.x + w); maxY = Math.max(maxY, layer.y + h);
+const w = layer.img.width * layer.scale, h = layer.img.height * layer.scale;
+minX = Math.min(minX, layer.x); minY = Math.min(minY, layer.y);
+maxX = Math.max(maxX, layer.x + w); maxY = Math.max(maxY, layer.y + h);
 }
-  });
-  return minX === Infinity ? null : { minX, minY, maxX, maxY };
+});
+return minX === Infinity ? null : { minX, minY, maxX, maxY };
 }
 function getTightBoundsInRegion(layer, gx0, gy0, gx1, gy1, pad) {
-  const cMinX = Math.floor(gx0 / CHUNK_SIZE), cMinY = Math.floor(gy0 / CHUNK_SIZE);
-  const cMaxX = Math.floor((gx1 - 1) / CHUNK_SIZE), cMaxY = Math.floor((gy1 - 1) / CHUNK_SIZE);
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (let cx = cMinX; cx <= cMaxX; cx++) {
+const cMinX = Math.floor(gx0 / CHUNK_SIZE), cMinY = Math.floor(gy0 / CHUNK_SIZE);
+const cMaxX = Math.floor((gx1 - 1) / CHUNK_SIZE), cMaxY = Math.floor((gy1 - 1) / CHUNK_SIZE);
+let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+for (let cx = cMinX; cx <= cMaxX; cx++) {
 for (let cy = cMinY; cy <= cMaxY; cy++) {
-  const key = chunkKey(cx, cy);
-  if (!layer.chunks[key]) continue;
-  const d = layer.chunks[key].ctx.getImageData(0, 0, CHUNK_SIZE, CHUNK_SIZE).data;
-  for (let py = 0; py < CHUNK_SIZE; py++) {
+const key = chunkKey(cx, cy);
+if (!layer.chunks[key]) continue;
+const d = layer.chunks[key].ctx.getImageData(0, 0, CHUNK_SIZE, CHUNK_SIZE).data;
+for (let py = 0; py < CHUNK_SIZE; py++) {
 for (let px = 0; px < CHUNK_SIZE; px++) {
-  if (d[(py * CHUNK_SIZE + px) * 4 + 3] > 0) {
+if (d[(py * CHUNK_SIZE + px) * 4 + 3] > 0) {
 const tx = cx * CHUNK_SIZE + px, ty = cy * CHUNK_SIZE + py;
 if (tx >= gx0 && tx < gx1 && ty >= gy0 && ty < gy1) {
-  minX = Math.min(minX, tx); minY = Math.min(minY, ty);
-  maxX = Math.max(maxX, tx + 1); maxY = Math.max(maxY, ty + 1);
+minX = Math.min(minX, tx); minY = Math.min(minY, ty);
+maxX = Math.max(maxX, tx + 1); maxY = Math.max(maxY, ty + 1);
 }
-  }
 }
-  }
 }
-  }
-  if (minX === Infinity) return null;
-  return {
+}
+}
+}
+if (minX === Infinity) return null;
+return {
 x: Math.max(gx0, minX - pad), y: Math.max(gy0, minY - pad),
 w: Math.min(gx1, maxX + pad) - Math.max(gx0, minX - pad),
 h: Math.min(gy1, maxY + pad) - Math.max(gy0, minY - pad)
-  };
+};
 }
 function renderSectionToCanvas(gx0, gy0, gx1, gy1, cropX, cropY, cropW, cropH, includeBg) {
-  const out = document.createElement("canvas");
-  out.width = cropW; out.height = cropH;
-  const ec = out.getContext("2d");
-  if (includeBg) { ec.fillStyle = bgColor; ec.fillRect(0, 0, cropW, cropH); }
-  layers.forEach(layer => {
+const out = document.createElement("canvas");
+out.width = cropW; out.height = cropH;
+const ec = out.getContext("2d");
+if (includeBg) { ec.fillStyle = bgColor; ec.fillRect(0, 0, cropW, cropH); }
+layers.forEach(layer => {
 if (!layer.visible) return;
 if (layer.type === "paint") {
-  const cMinX = Math.floor(gx0 / CHUNK_SIZE), cMinY = Math.floor(gy0 / CHUNK_SIZE);
-  const cMaxX = Math.floor((gx1 - 1) / CHUNK_SIZE), cMaxY = Math.floor((gy1 - 1) / CHUNK_SIZE);
-  for (let cx = cMinX; cx <= cMaxX; cx++) {
+const cMinX = Math.floor(gx0 / CHUNK_SIZE), cMinY = Math.floor(gy0 / CHUNK_SIZE);
+const cMaxX = Math.floor((gx1 - 1) / CHUNK_SIZE), cMaxY = Math.floor((gy1 - 1) / CHUNK_SIZE);
+for (let cx = cMinX; cx <= cMaxX; cx++) {
 for (let cy = cMinY; cy <= cMaxY; cy++) {
-  const chunk = layer.chunks[chunkKey(cx, cy)];
-  if (!chunk) continue;
-  const srcX = Math.max(0, cropX - cx * CHUNK_SIZE);
-  const srcY = Math.max(0, cropY - cy * CHUNK_SIZE);
-  const dstX = cx * CHUNK_SIZE + srcX - cropX;
-  const dstY = cy * CHUNK_SIZE + srcY - cropY;
-  const copyW = Math.min(CHUNK_SIZE - srcX, cropW - dstX);
-  const copyH = Math.min(CHUNK_SIZE - srcY, cropH - dstY);
-  if (copyW > 0 && copyH > 0) ec.drawImage(chunk.canvas, srcX, srcY, copyW, copyH, dstX, dstY, copyW, copyH);
+const chunk = layer.chunks[chunkKey(cx, cy)];
+if (!chunk) continue;
+const srcX = Math.max(0, cropX - cx * CHUNK_SIZE);
+const srcY = Math.max(0, cropY - cy * CHUNK_SIZE);
+const dstX = cx * CHUNK_SIZE + srcX - cropX;
+const dstY = cy * CHUNK_SIZE + srcY - cropY;
+const copyW = Math.min(CHUNK_SIZE - srcX, cropW - dstX);
+const copyH = Math.min(CHUNK_SIZE - srcY, cropH - dstY);
+if (copyW > 0 && copyH > 0) ec.drawImage(chunk.canvas, srcX, srcY, copyW, copyH, dstX, dstY, copyW, copyH);
 }
-  }
+}
 } else if (layer.type === "image") {
-  const iw = layer.img.width * layer.scale, ih = layer.img.height * layer.scale;
-  if (layer.x < gx1 && layer.x + iw > gx0 && layer.y < gy1 && layer.y + ih > gy0)
+const iw = layer.img.width * layer.scale, ih = layer.img.height * layer.scale;
+if (layer.x < gx1 && layer.x + iw > gx0 && layer.y < gy1 && layer.y + ih > gy0)
 ec.drawImage(layer.img, layer.x - cropX, layer.y - cropY, iw, ih);
 }
-  });
-  return out;
+});
+return out;
 }
 window.onpaste = e => {
-  for (const it of e.clipboardData?.items || []) {
+for (const it of e.clipboardData?.items || []) {
 if (it.type.startsWith("image/")) {
-  const f = it.getAsFile(), img = new Image();
-  img.onload = () => addImageLayer(img, toTrueX(canvas.width / 2 - img.width / 2), toTrueY(canvas.height / 2 - img.height / 2), f?.name || "Pasted");
-  img.src = URL.createObjectURL(f);
+const f = it.getAsFile(), img = new Image();
+img.onload = () => addImageLayer(img, toTrueX(canvas.width / 2 - img.width / 2), toTrueY(canvas.height / 2 - img.height / 2), f?.name || "Pasted");
+img.src = URL.createObjectURL(f);
 }
-  }
+}
 };
 canvas.ondragover = e => e.preventDefault();
 canvas.ondrop = e => {
-  e.preventDefault();
-  for (const f of e.dataTransfer.files) {
+e.preventDefault();
+for (const f of e.dataTransfer.files) {
 if (f.type.startsWith("image/")) {
-  const img = new Image();
-  img.onload = () => addImageLayer(img, toTrueX(e.offsetX), toTrueY(e.offsetY), f.name);
-  img.src = URL.createObjectURL(f);
+const img = new Image();
+img.onload = () => addImageLayer(img, toTrueX(e.offsetX), toTrueY(e.offsetY), f.name);
+img.src = URL.createObjectURL(f);
 }
-  }
+}
 };
 const cursorOverlay = document.getElementById("cursorOverlay");
 const cursorCtx = cursorOverlay.getContext("2d");
 let _cursorMouseX = -999, _cursorMouseY = -999, _cursorRAF = null, _cursorOverUI = false;
 function resizeCursorOverlay() {
-  cursorOverlay.width = window.innerWidth;
-  cursorOverlay.height = window.innerHeight;
-  _paintCursor();
+cursorOverlay.width = window.innerWidth;
+cursorOverlay.height = window.innerHeight;
+_paintCursor();
 }
 resizeCursorOverlay();
 window.addEventListener("resize", () => {
-  resizeCanvases(); redraw(); resizeCursorOverlay(); updateCropExportOverlay();
-  
-  document.querySelectorAll(".color-strip-palette.open").forEach(el => positionStripPalette(el));
+resizeCanvases(); redraw(); resizeCursorOverlay(); updateCropExportOverlay();
+document.querySelectorAll(".color-strip-palette.open").forEach(el => positionStripPalette(el));
 });
 function updateCanvasCursor() {
-  if (pasteGhost) {
+if (pasteGhost) {
 canvas.style.cursor = "none";
 document.body.style.cursor = "none";
 return;
-  }
-  if (currentTool === "brush" || currentTool === "eraser") {
+}
+if (currentTool === "brush" || currentTool === "eraser") {
 canvas.style.cursor = "none";
-  } else {
+} else {
 canvas.style.cursor = ["select","line","rect","circle","cropExport"].includes(currentTool) ? "crosshair" : "default";
 document.body.style.cursor = "";
 cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
-  }
+}
 }
 function _paintCursor() {
-  _cursorRAF = null;
-  cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
-  if (currentTool !== "brush" && currentTool !== "eraser") return;
-  if (_cursorMouseX < 0 || _cursorOverUI) return;
-  const strokeW = currentTool === "eraser" ? brushSize * 3 : brushSize;
-  const r   = Math.max(0.5, (strokeW / 2) * scale);
-  const haloR   = r + Math.min(1, r * 0.5);
-  const x = _cursorMouseX, y = _cursorMouseY;
-  cursorCtx.save();
-  cursorCtx.beginPath();
-  cursorCtx.arc(x, y, haloR, 0, Math.PI * 2);
-  cursorCtx.strokeStyle = "rgba(0,0,0,0.6)";
-  cursorCtx.lineWidth   = Math.min(3, r * 1.5);
-  cursorCtx.stroke();
-  cursorCtx.beginPath();
-  cursorCtx.arc(x, y, r, 0, Math.PI * 2);
-  cursorCtx.strokeStyle = currentTool === "eraser" ? "rgba(255,255,255,0.95)" : brushColor;
-  cursorCtx.lineWidth   = Math.min(1.5, r * 0.75);
-  cursorCtx.stroke();
-  cursorCtx.restore();
+_cursorRAF = null;
+cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
+if (currentTool !== "brush" && currentTool !== "eraser") return;
+if (_cursorMouseX < 0 || _cursorOverUI) return;
+const strokeW = currentTool === "eraser" ? brushSize * 3 : brushSize;
+const r = Math.max(0.5, (strokeW / 2) * scale);
+const haloR = r + Math.min(1, r * 0.5);
+const x = _cursorMouseX, y = _cursorMouseY;
+cursorCtx.save();
+cursorCtx.beginPath();
+cursorCtx.arc(x, y, haloR, 0, Math.PI * 2);
+cursorCtx.strokeStyle = "rgba(0,0,0,0.6)";
+cursorCtx.lineWidth = Math.min(3, r * 1.5);
+cursorCtx.stroke();
+cursorCtx.beginPath();
+cursorCtx.arc(x, y, r, 0, Math.PI * 2);
+cursorCtx.strokeStyle = currentTool === "eraser" ? "rgba(255,255,255,0.95)" : brushColor;
+cursorCtx.lineWidth = Math.min(1.5, r * 0.75);
+cursorCtx.stroke();
+cursorCtx.restore();
 }
 function scheduleCursorDraw() { if (!_cursorRAF) _cursorRAF = requestAnimationFrame(_paintCursor); }
 function _isUIElement(el) {
-  return el?.closest('#toolbar,#layersPanel,#polylineIndicator,#clipboardStatus') !== null;
+return el?.closest('#toolbar,#layersPanel,#polylineIndicator,#clipboardStatus') !== null;
 }
 window.addEventListener("mousemove", e => {
-  _cursorMouseX = e.clientX; _cursorMouseY = e.clientY;
-  _cursorOverUI = _isUIElement(e.target);
-  if (_cursorOverUI) {
+_cursorMouseX = e.clientX; _cursorMouseY = e.clientY;
+_cursorOverUI = _isUIElement(e.target);
+if (_cursorOverUI) {
 if (currentTool === "brush" || currentTool === "eraser") { canvas.style.cursor = "none"; document.body.style.cursor = ""; }
 cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
 return;
-  }
-  if (currentTool === "brush" || currentTool === "eraser") {
+}
+if (currentTool === "brush" || currentTool === "eraser") {
 canvas.style.cursor = document.body.style.cursor = "none";
 scheduleCursorDraw();
-  }
+}
 });
 canvas.addEventListener("pointermove", e => {
-  _cursorMouseX = e.clientX; _cursorMouseY = e.clientY;
+if (e.pointerType === "touch") return;
+_cursorMouseX = e.clientX; _cursorMouseY = e.clientY;
 }, { capture: true, passive: true });
 window.addEventListener("mouseleave", () => {
-  _cursorMouseX = -999;
-  cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
+_cursorMouseX = -999;
+cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
 });
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape") {
+if (e.key === "Escape") {
 closeAllDropdowns();
-if (pasteGhost) {
-  pasteGhost = null;
-  canvas.style.cursor = currentTool === "select" ? "crosshair" : "default";
-  redraw(); return;
+if (_pendingPaste || pasteGhost) {
+_pendingPaste = false; _touchPasting = false;
+pasteGhost = null;
+canvas.style.cursor = currentTool === "select" ? "crosshair" : "default";
+redraw(); return;
 }
 if (floatingSel) { commitFloatingSel(); selectRect = null; updateSelectOverlay(); updateClipboardBtns(); return; }
 if (currentTool === "cropExport") { resetCropExport(); return; }
 shapeStart = null; shapeDragMode = false;
 shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
 if (currentTool === "line") {
-  polylinePoints = []; shapeDragMode = false;
-  document.getElementById("polylineIndicator").style.display = "none";
+polylinePoints = []; shapeDragMode = false;
+document.getElementById("polylineIndicator").style.display = "none";
 }
 if (currentTool === "select") {
-  selectRect = selectDragStart = selectStart = null; selectDragMode = false;
-  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-  updateSelectOverlay(); updateClipboardBtns();
+selectRect = selectDragStart = selectStart = null; selectDragMode = false;
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+updateSelectOverlay(); updateClipboardBtns();
 }
 return;
-  }
-  if (!e.ctrlKey && !e.metaKey) {
+}
+if (!e.ctrlKey && !e.metaKey) {
 const keyTool = { s:"select", S:"select", b:"brush", B:"brush", e:"eraser", E:"eraser", l:"line", L:"line", r:"rect", R:"rect", c:"circle", C:"circle" };
 if (keyTool[e.key]) document.getElementById(keyTool[e.key] + "Btn")?.click();
 if ((e.key === "Delete" || e.key === "Backspace") && currentTool === "select" && (selectRect || floatingSel))
-  selectDelete();
-  }
-  if (e.ctrlKey || e.metaKey) {
+selectDelete();
+}
+if (e.ctrlKey || e.metaKey) {
 if ((e.key === "c" || e.key === "C") && currentTool === "select" && selectRect) { selectCopy(); e.preventDefault(); }
-if ((e.key === "x" || e.key === "X") && currentTool === "select" && selectRect) { selectCut();  e.preventDefault(); }
-if ((e.key === "v" || e.key === "V") && clipboard)   { selectPaste(); e.preventDefault(); }
-  }
+if ((e.key === "x" || e.key === "X") && currentTool === "select" && selectRect) { selectCut();e.preventDefault(); }
+if ((e.key === "v" || e.key === "V") && clipboard) { selectPaste(); e.preventDefault(); }
+}
 });
+const layersToggleBtn = document.getElementById("layersToggleBtn");
+const layersPanelEl = document.getElementById("layersPanel");
+const layersPanelOverlay = document.getElementById("layersPanelOverlay");
+function isMobile() { return window.innerWidth <= 700; }
+layersToggleBtn.addEventListener("click", () => {
+const open = layersPanelEl.classList.toggle("mobile-open");
+layersPanelOverlay.classList.toggle("active", open);
+});
+layersPanelOverlay.addEventListener("click", () => {
+layersPanelEl.classList.remove("mobile-open");
+layersPanelOverlay.classList.remove("active");
+});
+let _touchPrevX = null, _touchPrevY = null; 
+let _touchDrawing = false;   
+let _touchWasMulti = false;  
+let _touchChunkSnapshots = new Map();
+function _snapshotChunkIfNeeded(layer, cx, cy) {
+  const key = cx + "," + cy;
+  if (_touchChunkSnapshots.has(key)) return;
+  const chunk = getOrCreateChunk(layer, cx, cy);
+  _touchChunkSnapshots.set(key, chunk.ctx.getImageData(0, 0, CHUNK_SIZE, CHUNK_SIZE));
+}
+function _restoreTouchSnapshots() {
+  if (!_touchChunkSnapshots.size) return;
+  if (activePaintLayerIndex === null) return;
+  const layer = layers[activePaintLayerIndex];
+  if (!layer || layer.type !== "paint") return;
+  _touchChunkSnapshots.forEach((imageData, key) => {
+    const [cx, cy] = key.split(",").map(Number);
+    const chunk = getOrCreateChunk(layer, cx, cy);
+    chunk.ctx.putImageData(imageData, 0, 0);
+  });
+  invalidateLayerThumb(layer);
+  redraw();
+}
+function _touchDrawSegment(x0, y0, x1, y1) {
+  if (activePaintLayerIndex === null) return;
+  const layer = layers[activePaintLayerIndex];
+  if (!layer || layer.type !== "paint") return;
+  
+  const pad = (currentTool === "eraser" ? brushSize * 1.5 : brushSize / 2);
+  getChunksInRect(layer, Math.min(x0,x1) - pad, Math.min(y0,y1) - pad,
+                         Math.max(x0,x1) + pad, Math.max(y0,y1) + pad)
+    .forEach(({cx, cy}) => _snapshotChunkIfNeeded(layer, cx, cy));
+  drawOnActiveLayer(x0, y0, x1, y1, currentTool, brushColor, brushSize);
+  redraw();
+}
+function _cancelTouchStroke() {
+  _restoreTouchSnapshots();
+  _touchDrawing = false;
+  _touchPrevX = _touchPrevY = null;
+  _touchChunkSnapshots = new Map();
+}
+function _endTouchStroke() {
+  
+  _touchDrawing = false;
+  _touchPrevX = _touchPrevY = null;
+  _touchChunkSnapshots = new Map();
+}
+function _cancelNonBrushGesture() {
+  
+  if (_pendingPaste || _touchPasting) {
+    _pendingPaste = false; _touchPasting = false;
+    pasteGhost = null; redraw();
+  }
+  if (!leftDown) return;
+  leftDown = false;
+  shapeStart = null; shapeDragMode = false;
+  polylinePoints = [];
+  document.getElementById("polylineIndicator").style.display = "none";
+  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+  selectStart = null; selectDragMode = false; selectMoving = false;
+  updateSelectOverlay();
+  draggingImage = false;
+  cropExportStart = null; cropExportDragging = false;
+  updateCropExportOverlay?.();
+}
+canvas.addEventListener("touchstart", e => {
+e.preventDefault();
+if (e.touches.length > 1) {
+  
+  if (_touchDrawing) _cancelTouchStroke();
+  _cancelNonBrushGesture();
+  _touchWasMulti = true;
+  const t0 = e.touches[0], t1 = e.touches[1];
+  const dx = t0.pageX - t1.pageX, dy = t0.pageY - t1.pageY;
+  _pinchDist = Math.sqrt(dx*dx + dy*dy);
+  _pinchMid = { x: (t0.pageX + t1.pageX) / 2, y: (t0.pageY + t1.pageY) / 2 };
+} else {
+  
+  _touchWasMulti = false;
+  _touchDrawing = false;
+  _touchPrevX = _touchPrevY = null;
+  _touchChunkSnapshots = new Map();
+  const t = e.touches[0];
+  if (_pendingPaste && clipboard) {
+    _pendingPaste = false; _touchPasting = true;
+    _makePasteGhost(t.pageX, t.pageY);
+  } else if ((currentTool === "brush" || currentTool === "eraser") && activePaintLayerIndex !== null) {
+    const tx = toTrueX(t.pageX), ty = toTrueY(t.pageY);
+    _touchDrawing = true;
+    _touchDrawSegment(tx, ty, tx, ty);
+    _touchPrevX = tx; _touchPrevY = ty;
+  } else {
+    
+    handleDown(t.pageX, t.pageY);
+  }
+}
+}, { passive: false });
+canvas.addEventListener("touchmove", e => {
+e.preventDefault();
+if (e.touches.length >= 2) {
+  
+  if (_touchDrawing) _cancelTouchStroke();
+  _cancelNonBrushGesture();
+  _touchWasMulti = true;
+  const t0 = e.touches[0], t1 = e.touches[1];
+  const dx = t0.pageX - t1.pageX, dy = t0.pageY - t1.pageY;
+  const newDist = Math.sqrt(dx*dx + dy*dy);
+  const newMid = { x: (t0.pageX + t1.pageX) / 2, y: (t0.pageY + t1.pageY) / 2 };
+  if (_pinchDist !== null) {
+    offsetX += (newMid.x - _pinchMid.x) / scale;
+    offsetY += (newMid.y - _pinchMid.y) / scale;
+    const ratio = newDist / _pinchDist;
+    const MIN_SCALE = Math.min(canvas.clientWidth, canvas.clientHeight) / (EXPORT_GRID * 10);
+    const ns = Math.max(MIN_SCALE, Math.min(40, scale * ratio));
+    if (ns !== scale) {
+      offsetX -= (newMid.x / ns) * ((ns - scale) / scale);
+      offsetY -= (newMid.y / ns) * ((ns - scale) / scale);
+      scale = ns;
+    }
+    _pinchDist = newDist; _pinchMid = newMid;
+    redraw();
+  }
+  return;
+}
+if (_touchWasMulti || e.touches.length !== 1) return;
+const t = e.touches[0];
+_cursorMouseX = t.pageX; _cursorMouseY = t.pageY; scheduleCursorDraw();
+if (_touchPasting && pasteGhost) {
+  const tx = toTrueX(t.pageX), ty = toTrueY(t.pageY);
+  pasteGhost.tx = tx - pasteGhost.offX;
+  pasteGhost.ty = ty - pasteGhost.offY;
+  if (!_dirtyRAF) _dirtyRAF = requestAnimationFrame(() => { _dirtyRAF = null; redraw(); });
+} else if (_touchDrawing) {
+  const tx = toTrueX(t.pageX), ty = toTrueY(t.pageY);
+  _touchDrawSegment(_touchPrevX, _touchPrevY, tx, ty);
+  _touchPrevX = tx; _touchPrevY = ty;
+} else if (leftDown) {
+  handleMove(t.pageX, t.pageY);
+}
+}, { passive: false });
+canvas.addEventListener("touchend", e => {
+e.preventDefault();
+if (e.touches.length === 0) {
+  _pinchDist = null; _pinchMid = null;
+  if (_touchPasting && pasteGhost) {
+    _touchPasting = false;
+    commitPasteGhost();
+  } else if (_touchDrawing) {
+    _endTouchStroke();
+  } else if (leftDown) {
+    const t = e.changedTouches[0];
+    handleUp(t.pageX, t.pageY, true);
+  }
+  _touchWasMulti = false;
+  _cursorMouseX = -999;
+  cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
+} else if (e.touches.length === 1) {
+  
+  _pinchDist = null; _pinchMid = null;
+  _touchWasMulti = true; 
+}
+}, { passive: false });
+canvas.addEventListener("touchcancel", e => {
+_pinchDist = null; _pinchMid = null;
+if (_touchDrawing) _cancelTouchStroke();
+_cancelNonBrushGesture(); 
+_touchWasMulti = false;
+_cursorMouseX = -999;
+cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
+}, { passive: false });
 addPaintLayer("Layer 1");
 setTool("brush");
 updateColorDot();
@@ -1757,6 +1999,6 @@ updateCropBgBtn();
 updateToolbarState();
 resizeCanvases();
 redraw();
-  </script>
+</script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 **Doodly**
+
 A lightweight drawing app that runs entirely in your browser.
 
 **Features**

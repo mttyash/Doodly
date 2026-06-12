@@ -95,57 +95,59 @@ transition: flex 0.12s ease;
 #brushSizeWrap { display: flex; align-items: center; padding: 0 2px; }
 #layersPanel {
 position: fixed; top: 12px; right: 12px; width: var(--panel-w);
-max-height: calc(100vh - 24px); background: var(--surface); border: 1px solid var(--border);
+height: var(--toolbar-h); background: var(--surface); border: 1px solid var(--border);
 border-radius: var(--radius-lg); display: flex; flex-direction: column;
-z-index: 999; box-shadow: 0 8px 32px #0009; overflow: hidden;
-transition: transform 0.22s ease, opacity 0.22s ease;
+z-index: 999; box-shadow: 0 8px 32px #0009;
 }
 @media (max-width: 700px) {
 #layersPanel {
 top: auto; bottom: 0; right: 0; left: 0; width: 100%;
-max-height: 55vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-transform: translateY(100%); opacity: 0; pointer-events: none;
+border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
-#layersPanel.mobile-open {
-transform: translateY(0); opacity: 1; pointer-events: auto;
-}
-#layersToggleBtn {
-display: flex !important;
-}
-}
-#layersToggleBtn {
-display: none;
-position: fixed; bottom: 16px; right: 16px;
-width: 46px; height: 46px; border-radius: 50%;
-background: var(--surface); border: 1px solid var(--border);
-color: var(--text); cursor: pointer; z-index: 1001;
-align-items: center; justify-content: center;
-box-shadow: 0 4px 16px #0008;
-transition: background var(--trans);
-}
-#layersToggleBtn:hover { background: var(--btn-hover); }
-#layersPanelOverlay {
-display: none; position: fixed; inset: 0; z-index: 998; background: transparent;
-}
-@media (max-width: 700px) {
-#layersPanelOverlay.active { display: block; }
 }
 #layersPanelHeader {
-padding: 0 8px 0 14px; height: var(--toolbar-h); border-bottom: 1px solid var(--border);
+padding: 0 8px 0 14px; height: var(--toolbar-h);
 font-size: var(--ui-font-size); font-weight: 700; letter-spacing: 0.12em;
 text-transform: uppercase; color: var(--text-dim);
 display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
 }
-#uploadImageLayer, #addPaintLayer {
+#layersList {
+position: fixed; right: 12px; width: var(--panel-w);
+background: var(--surface); border: 1px solid var(--border);
+border-radius: var(--radius-lg); box-shadow: 0 8px 32px #0009;
+overflow-y: auto; padding: 6px; z-index: 1000;
+max-height: calc(100vh - var(--toolbar-h) - 40px);
+opacity: 0; pointer-events: none;
+transform: translateY(-8px);
+transition: opacity 0.18s ease, transform 0.18s ease;
+}
+#layersPanel.layers-open + #layersList {
+opacity: 1; pointer-events: auto;
+transform: translateY(0);
+}
+@media (max-width: 700px) {
+#layersList {
+right: 0; left: 0; width: 100%;
+border-radius: var(--radius-lg);
+max-height: calc(55vh - var(--toolbar-h));
+transform: translateY(8px);
+z-index: 998;
+}
+#layersPanel.layers-open + #layersList {
+transform: translateY(0);
+}
+}
+#layersList::-webkit-scrollbar { width: 4px; }
+#layersList::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+#uploadImageLayer, #addPaintLayer, #layersToggle {
 width: 38px; height: 38px; border-radius: var(--radius-sm);
 background: transparent; border: none; color: var(--text); font-size: var(--ui-font-size);
 line-height: 1; padding: 0; cursor: pointer; display: flex; align-items: center;
 justify-content: center; transition: background var(--trans); flex-shrink: 0;
 }
-#uploadImageLayer:hover, #addPaintLayer:hover { background: var(--btn-hover); }
-#layersList { flex: 1; overflow-y: auto; padding: 6px; min-height: 0; }
-#layersList::-webkit-scrollbar { width: 4px; }
-#layersList::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+#uploadImageLayer:hover, #addPaintLayer:hover, #layersToggle:hover { background: var(--btn-hover); }
+#layersToggle svg { transition: transform 0.18s ease; }
+#layersPanel.layers-open #layersToggle svg { transform: rotate(180deg); }
 .layer-item {
 display: flex; align-items: center; gap: 0; padding: 0; margin-bottom: 2px;
 background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm);
@@ -297,26 +299,21 @@ top: 0; left: 0; width: 100%; height: 100%; display: none;
 </div>
 <div id="brushStripPalette" class="color-strip-palette"></div>
 <div id="bgStripPalette" class="color-strip-palette"></div>
-<div id="layersPanelOverlay"></div>
-<button id="layersToggleBtn" aria-label="Toggle layers">
-<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-<path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>
-</svg>
-</button>
 <canvas id="cursorOverlay" style="position:fixed;inset:0;pointer-events:none;z-index:998;"></canvas>
 <div id="polylineIndicator">Click to place end point · Esc to cancel</div>
 <div id="clipboardStatus"></div>
 <div id="layersPanel">
 <div id="layersPanelHeader">
 <span>Layers</span>
-<div style="display:flex;gap:2px">
+<div style="display:flex;align-items:center;gap:2px">
 <button id="uploadImageLayer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
 <input type="file" id="uploadImageInput" accept="image/*" style="display:none">
 <button id="addPaintLayer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+<button id="layersToggle" aria-label="Toggle layers"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+</div>
 </div>
 </div>
 <div id="layersList"></div>
-</div>
 <canvas id="canvas"></canvas>
 <canvas id="shapePreview"></canvas>
 <canvas id="selectOverlay" style="position:fixed;top:0;left:0;pointer-events:none;z-index:960;display:none"></canvas>
@@ -325,6 +322,7 @@ top: 0; left: 0; width: 100%; height: 100%; display: none;
 const canvas = document.getElementById("canvas");
 const ctx= canvas.getContext("2d");
 let _pinchDist = null, _pinchMid = null;
+let _pinchImageMode = false, _pinchImageInitScale = 1, _pinchImageInitX = 0, _pinchImageInitY = 0, _pinchImageInitDist = 1, _pinchImageInitMid = null;
 const shapePreviewCanvas = document.getElementById("shapePreview");
 const shapeCtx = shapePreviewCanvas.getContext("2d");
 const selectOverlayCanvas= document.getElementById("selectOverlay");
@@ -672,7 +670,7 @@ updateCanvasCursor();
 document.getElementById("polylineIndicator").style.display = "none";
 }
 const DRAWING_TOOL_IDS = ["brushBtn","eraserBtn","lineBtn","rectBtn","circleBtn","selectBtn",
-"cutBtn","copyBtn","pasteBtn","sizeUp","sizeDown","colorDot","brushColorWrap"];
+"sizeUp","sizeDown","colorDot","brushColorWrap"];
 function updateToolbarState() {
 const hasValidLayer = activePaintLayerIndex !== null;
 DRAWING_TOOL_IDS.forEach(id => {
@@ -840,15 +838,12 @@ e.stopPropagation();
 }
 function refreshLayersPanel() {
 layersList.innerHTML = "";
-const header = document.getElementById("layersPanelHeader");
 if (!layers.length) {
 layersList.style.display = "none";
-header.style.borderBottom = "none";
 updateToolbarState();
 return;
 }
 layersList.style.display = "";
-header.style.borderBottom = "";
 for (let i = layers.length - 1; i >= 0; i--) {
 const layer= layers[i];
 const isActive = i === activePaintLayerIndex || i === selectedImageLayerIndex;
@@ -896,7 +891,10 @@ updateToolbarState();
 }
 function selectLayer(realI, layer) {
 if (layer.type === "paint") { activePaintLayerIndex = realI; selectedImageLayerIndex = null; }
-else{ selectedImageLayerIndex = realI; activePaintLayerIndex = null; }
+else {
+selectedImageLayerIndex = realI; activePaintLayerIndex = null;
+if (currentTool !== "cropExport") setTool("brush");
+}
 refreshLayersPanel(); redraw(); updateToolbarState();
 }
 function moveLayer(from, to) {
@@ -923,6 +921,19 @@ cursorX = prevX = screenX; cursorY = prevY = screenY;
 leftDown = true;
 const tx = toTrueX(cursorX), ty = toTrueY(cursorY);
 if (pasteGhost) { commitPasteGhost(); return; }
+if (selectedImageLayerIndex !== null) {
+const _imgLayer = layers[selectedImageLayerIndex];
+if (_imgLayer) {
+const _iw = _imgLayer.img.width * _imgLayer.scale, _ih = _imgLayer.img.height * _imgLayer.scale;
+if (tx >= _imgLayer.x && tx <= _imgLayer.x + _iw && ty >= _imgLayer.y && ty <= _imgLayer.y + _ih) {
+draggingImage = true;
+dragOffset = { x: tx - _imgLayer.x, y: ty - _imgLayer.y };
+imageDragStart = { index: selectedImageLayerIndex, fromX: _imgLayer.x, fromY: _imgLayer.y };
+canvas.style.cursor = "grabbing";
+return;
+}
+}
+}
 if (currentTool === "cropExport") {
 cropSelectedCells = [];
 updateCropExportOverlay(); updateCropDownloadBtn();
@@ -982,18 +993,6 @@ if (selectRect) captureSelectionPixels();
 updateClipboardBtns();
 }
 return;
-}
-if (selectedImageLayerIndex !== null) {
-const layer = layers[selectedImageLayerIndex];
-if (layer) {
-const w = layer.img.width * layer.scale, h = layer.img.height * layer.scale;
-if (tx >= layer.x && tx <= layer.x + w && ty >= layer.y && ty <= layer.y + h) {
-draggingImage = true;
-dragOffset = { x: tx - layer.x, y: ty - layer.y };
-imageDragStart = { index: selectedImageLayerIndex, fromX: layer.x, fromY: layer.y };
-return;
-}
-}
 }
 if (currentTool === "line") {
 if (activePaintLayerIndex === null) return;
@@ -1121,7 +1120,7 @@ shapeStart = null; shapeDragMode = false; redraw();
 shapeDragMode = false;
 }
 }
-if (draggingImage) { draggingImage = false; imageDragStart = null; }
+if (draggingImage) { draggingImage = false; imageDragStart = null; if (selectedImageLayerIndex !== null) canvas.style.cursor = "grab"; }
 if (currentTool === "select" && (selectDragStart || selectMoving || selectStart)) {
 const wasMoving = selectMoving;
 selectDragStart = null; selectMoving = false;
@@ -1166,6 +1165,7 @@ activePointerId = e.pointerId;
 canvas.setPointerCapture?.(e.pointerId);
 if (e.button === 1) { middleDown = true; cursorX = prevX = e.pageX; cursorY = prevY = e.pageY; return; }
 if (e.button !== 0) return;
+if (selectedImageLayerIndex !== null) { handleDown(e.pageX, e.pageY); return; }
 if (currentTool === "brush" || currentTool === "eraser") {
 cursorX = prevX = e.pageX; cursorY = prevY = e.pageY;
 leftDown = true;
@@ -1190,7 +1190,7 @@ drawShapePreview(toScreenX(shapeStart.x), toScreenY(shapeStart.y), cursorX, curs
 if (currentTool === "line" && polylinePoints.length > 0) drawPolylinePreview(cursorX, cursorY);
 prevX = cursorX; prevY = cursorY; return;
 }
-if (leftDown && (currentTool === "brush" || currentTool === "eraser")) {
+if (selectedImageLayerIndex === null && leftDown && (currentTool === "brush" || currentTool === "eraser")) {
 if (activePaintLayerIndex !== null) {
 const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
 for (const ce of events) {
@@ -1249,10 +1249,7 @@ shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
 }
 canvas.addEventListener("pointercancel", resetInteractionState);
 window.addEventListener("blur", () => {
-activePointerId = null; leftDown = false; middleDown = false;
-draggingImage = false; shapeStart = null; currentStroke = null;
-shapeDragMode = false;
-shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+resetInteractionState();
 });
 window.addEventListener("mouseup", () => { middleDown = false; });
 document.addEventListener("contextmenu", e => e.preventDefault());
@@ -1485,18 +1482,18 @@ tmp.width = clipboard.w; tmp.height = clipboard.h;
 tmp.getContext("2d").putImageData(clipboard.imageData, 0, 0);
 const tx = toTrueX(screenX), ty = toTrueY(screenY);
 pasteGhost = { tmpCanvas: tmp, w: clipboard.w, h: clipboard.h,
-  tx: tx - clipboard.w / 2, ty: ty - clipboard.h / 2,
-  offX: clipboard.w / 2, offY: clipboard.h / 2 };
+tx: tx - clipboard.w / 2, ty: ty - clipboard.h / 2,
+offX: clipboard.w / 2, offY: clipboard.h / 2 };
 canvas.style.cursor = "none";
 redraw();
 }
 function selectPaste() {
 if (!clipboard) { showClipboardStatus("Clipboard empty"); return; }
 if (window.matchMedia("(pointer: coarse)").matches) {
-  _pendingPaste = true; _touchPasting = false;
-  pasteGhost = null;
-  showClipboardStatus("Tap canvas to place");
-  return;
+_pendingPaste = true; _touchPasting = false;
+pasteGhost = null;
+showClipboardStatus("Tap canvas to place");
+return;
 }
 _makePasteGhost(cursorX, cursorY);
 }
@@ -1717,6 +1714,12 @@ canvas.style.cursor = "none";
 document.body.style.cursor = "none";
 return;
 }
+if (selectedImageLayerIndex !== null) {
+canvas.style.cursor = draggingImage ? "grabbing" : "grab";
+document.body.style.cursor = "";
+cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
+return;
+}
 if (currentTool === "brush" || currentTool === "eraser") {
 canvas.style.cursor = "none";
 } else {
@@ -1728,6 +1731,7 @@ cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
 function _paintCursor() {
 _cursorRAF = null;
 cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
+if (selectedImageLayerIndex !== null) return;
 if (currentTool !== "brush" && currentTool !== "eraser") return;
 if (_cursorMouseX < 0 || _cursorOverUI) return;
 const strokeW = currentTool === "eraser" ? brushSize * 3 : brushSize;
@@ -1756,6 +1760,12 @@ _cursorMouseX = e.clientX; _cursorMouseY = e.clientY;
 _cursorOverUI = _isUIElement(e.target);
 if (_cursorOverUI) {
 if (currentTool === "brush" || currentTool === "eraser") { canvas.style.cursor = "none"; document.body.style.cursor = ""; }
+cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
+return;
+}
+if (selectedImageLayerIndex !== null) {
+canvas.style.cursor = draggingImage ? "grabbing" : "grab";
+document.body.style.cursor = "";
 cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
 return;
 }
@@ -1808,182 +1818,215 @@ if ((e.key === "x" || e.key === "X") && currentTool === "select" && selectRect) 
 if ((e.key === "v" || e.key === "V") && clipboard) { selectPaste(); e.preventDefault(); }
 }
 });
-const layersToggleBtn = document.getElementById("layersToggleBtn");
 const layersPanelEl = document.getElementById("layersPanel");
-const layersPanelOverlay = document.getElementById("layersPanelOverlay");
-function isMobile() { return window.innerWidth <= 700; }
-layersToggleBtn.addEventListener("click", () => {
-const open = layersPanelEl.classList.toggle("mobile-open");
-layersPanelOverlay.classList.toggle("active", open);
+const layersListEl = document.getElementById("layersList");
+function positionLayersList() {
+const rect = layersPanelEl.getBoundingClientRect();
+const isMobileLayout = window.innerWidth <= 700;
+if (isMobileLayout) {
+layersListEl.style.bottom = (window.innerHeight - rect.top + 8) + "px";
+layersListEl.style.top = "";
+} else {
+layersListEl.style.top = (rect.bottom + 8) + "px";
+layersListEl.style.bottom = "";
+}
+}
+document.getElementById("layersToggle").addEventListener("click", () => {
+const opening = !layersPanelEl.classList.contains("layers-open");
+if (opening) positionLayersList();
+layersPanelEl.classList.toggle("layers-open");
 });
-layersPanelOverlay.addEventListener("click", () => {
-layersPanelEl.classList.remove("mobile-open");
-layersPanelOverlay.classList.remove("active");
-});
+window.addEventListener("resize", positionLayersList);
 let _touchPrevX = null, _touchPrevY = null; 
-let _touchDrawing = false;   
-let _touchWasMulti = false;  
+let _touchDrawing = false; 
+let _touchWasMulti = false;
 let _touchChunkSnapshots = new Map();
 function _snapshotChunkIfNeeded(layer, cx, cy) {
-  const key = cx + "," + cy;
-  if (_touchChunkSnapshots.has(key)) return;
-  const chunk = getOrCreateChunk(layer, cx, cy);
-  _touchChunkSnapshots.set(key, chunk.ctx.getImageData(0, 0, CHUNK_SIZE, CHUNK_SIZE));
+const key = cx + "," + cy;
+if (_touchChunkSnapshots.has(key)) return;
+const chunk = getOrCreateChunk(layer, cx, cy);
+_touchChunkSnapshots.set(key, chunk.ctx.getImageData(0, 0, CHUNK_SIZE, CHUNK_SIZE));
 }
 function _restoreTouchSnapshots() {
-  if (!_touchChunkSnapshots.size) return;
-  if (activePaintLayerIndex === null) return;
-  const layer = layers[activePaintLayerIndex];
-  if (!layer || layer.type !== "paint") return;
-  _touchChunkSnapshots.forEach((imageData, key) => {
-    const [cx, cy] = key.split(",").map(Number);
-    const chunk = getOrCreateChunk(layer, cx, cy);
-    chunk.ctx.putImageData(imageData, 0, 0);
-  });
-  invalidateLayerThumb(layer);
-  redraw();
+if (!_touchChunkSnapshots.size) return;
+if (activePaintLayerIndex === null) return;
+const layer = layers[activePaintLayerIndex];
+if (!layer || layer.type !== "paint") return;
+_touchChunkSnapshots.forEach((imageData, key) => {
+const [cx, cy] = key.split(",").map(Number);
+const chunk = getOrCreateChunk(layer, cx, cy);
+chunk.ctx.putImageData(imageData, 0, 0);
+});
+invalidateLayerThumb(layer);
+redraw();
 }
 function _touchDrawSegment(x0, y0, x1, y1) {
-  if (activePaintLayerIndex === null) return;
-  const layer = layers[activePaintLayerIndex];
-  if (!layer || layer.type !== "paint") return;
-  
-  const pad = (currentTool === "eraser" ? brushSize * 1.5 : brushSize / 2);
-  getChunksInRect(layer, Math.min(x0,x1) - pad, Math.min(y0,y1) - pad,
-                         Math.max(x0,x1) + pad, Math.max(y0,y1) + pad)
-    .forEach(({cx, cy}) => _snapshotChunkIfNeeded(layer, cx, cy));
-  drawOnActiveLayer(x0, y0, x1, y1, currentTool, brushColor, brushSize);
-  redraw();
+if (activePaintLayerIndex === null) return;
+const layer = layers[activePaintLayerIndex];
+if (!layer || layer.type !== "paint") return;
+const pad = (currentTool === "eraser" ? brushSize * 1.5 : brushSize / 2);
+getChunksInRect(layer, Math.min(x0,x1) - pad, Math.min(y0,y1) - pad,
+ Math.max(x0,x1) + pad, Math.max(y0,y1) + pad)
+.forEach(({cx, cy}) => _snapshotChunkIfNeeded(layer, cx, cy));
+drawOnActiveLayer(x0, y0, x1, y1, currentTool, brushColor, brushSize);
+redraw();
 }
 function _cancelTouchStroke() {
-  _restoreTouchSnapshots();
-  _touchDrawing = false;
-  _touchPrevX = _touchPrevY = null;
-  _touchChunkSnapshots = new Map();
+_restoreTouchSnapshots();
+_touchDrawing = false;
+_touchPrevX = _touchPrevY = null;
+_touchChunkSnapshots = new Map();
 }
 function _endTouchStroke() {
-  
-  _touchDrawing = false;
-  _touchPrevX = _touchPrevY = null;
-  _touchChunkSnapshots = new Map();
+_touchDrawing = false;
+_touchPrevX = _touchPrevY = null;
+_touchChunkSnapshots = new Map();
 }
 function _cancelNonBrushGesture() {
-  
-  if (_pendingPaste || _touchPasting) {
-    _pendingPaste = false; _touchPasting = false;
-    pasteGhost = null; redraw();
-  }
-  if (!leftDown) return;
-  leftDown = false;
-  shapeStart = null; shapeDragMode = false;
-  polylinePoints = [];
-  document.getElementById("polylineIndicator").style.display = "none";
-  shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
-  selectStart = null; selectDragMode = false; selectMoving = false;
-  updateSelectOverlay();
-  draggingImage = false;
-  cropExportStart = null; cropExportDragging = false;
-  updateCropExportOverlay?.();
+if (_pendingPaste || _touchPasting) {
+_pendingPaste = false; _touchPasting = false;
+pasteGhost = null; redraw();
+}
+if (!leftDown) return;
+leftDown = false;
+shapeStart = null; shapeDragMode = false;
+polylinePoints = [];
+document.getElementById("polylineIndicator").style.display = "none";
+shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
+selectStart = null; selectDragMode = false; selectMoving = false;
+updateSelectOverlay();
+draggingImage = false;
+cropExportStart = null; cropExportDragging = false;
+updateCropExportOverlay?.();
 }
 canvas.addEventListener("touchstart", e => {
 e.preventDefault();
 if (e.touches.length > 1) {
-  
-  if (_touchDrawing) _cancelTouchStroke();
-  _cancelNonBrushGesture();
-  _touchWasMulti = true;
-  const t0 = e.touches[0], t1 = e.touches[1];
-  const dx = t0.pageX - t1.pageX, dy = t0.pageY - t1.pageY;
-  _pinchDist = Math.sqrt(dx*dx + dy*dy);
-  _pinchMid = { x: (t0.pageX + t1.pageX) / 2, y: (t0.pageY + t1.pageY) / 2 };
+if (_touchDrawing) _cancelTouchStroke();
+_cancelNonBrushGesture();
+_touchWasMulti = true;
+const t0 = e.touches[0], t1 = e.touches[1];
+const dx = t0.pageX - t1.pageX, dy = t0.pageY - t1.pageY;
+_pinchDist = Math.sqrt(dx*dx + dy*dy);
+_pinchMid = { x: (t0.pageX + t1.pageX) / 2, y: (t0.pageY + t1.pageY) / 2 };
+_pinchImageMode = false;
+if (selectedImageLayerIndex !== null) {
+const layer = layers[selectedImageLayerIndex];
+if (layer && layer.type === "image") {
+const iw = layer.img.width * layer.scale, ih = layer.img.height * layer.scale;
+const inImage = pt => {
+const tx = toTrueX(pt.pageX), ty = toTrueY(pt.pageY);
+return tx >= layer.x && tx <= layer.x + iw && ty >= layer.y && ty <= layer.y + ih;
+};
+if (inImage(t0) && inImage(t1)) {
+_pinchImageMode = true;
+_pinchImageInitDist = _pinchDist;
+_pinchImageInitMid = { x: toTrueX(_pinchMid.x), y: toTrueY(_pinchMid.y) };
+_pinchImageInitScale = layer.scale;
+_pinchImageInitX = layer.x;
+_pinchImageInitY = layer.y;
+}
+}
+}
 } else {
-  
-  _touchWasMulti = false;
-  _touchDrawing = false;
-  _touchPrevX = _touchPrevY = null;
-  _touchChunkSnapshots = new Map();
-  const t = e.touches[0];
-  if (_pendingPaste && clipboard) {
-    _pendingPaste = false; _touchPasting = true;
-    _makePasteGhost(t.pageX, t.pageY);
-  } else if ((currentTool === "brush" || currentTool === "eraser") && activePaintLayerIndex !== null) {
-    const tx = toTrueX(t.pageX), ty = toTrueY(t.pageY);
-    _touchDrawing = true;
-    _touchDrawSegment(tx, ty, tx, ty);
-    _touchPrevX = tx; _touchPrevY = ty;
-  } else {
-    
-    handleDown(t.pageX, t.pageY);
-  }
+_touchWasMulti = false;
+const t = e.touches[0];
+if (_pendingPaste && clipboard) {
+_pendingPaste = false; _touchPasting = true;
+_makePasteGhost(t.pageX, t.pageY);
+} else if ((currentTool === "brush" || currentTool === "eraser") && activePaintLayerIndex !== null) {
+const tx = toTrueX(t.pageX), ty = toTrueY(t.pageY);
+_touchDrawing = true;
+_touchDrawSegment(tx, ty, tx, ty);
+_touchPrevX = tx; _touchPrevY = ty;
+} else {
+handleDown(t.pageX, t.pageY);
+}
 }
 }, { passive: false });
 canvas.addEventListener("touchmove", e => {
 e.preventDefault();
 if (e.touches.length >= 2) {
-  
-  if (_touchDrawing) _cancelTouchStroke();
-  _cancelNonBrushGesture();
-  _touchWasMulti = true;
-  const t0 = e.touches[0], t1 = e.touches[1];
-  const dx = t0.pageX - t1.pageX, dy = t0.pageY - t1.pageY;
-  const newDist = Math.sqrt(dx*dx + dy*dy);
-  const newMid = { x: (t0.pageX + t1.pageX) / 2, y: (t0.pageY + t1.pageY) / 2 };
-  if (_pinchDist !== null) {
-    offsetX += (newMid.x - _pinchMid.x) / scale;
-    offsetY += (newMid.y - _pinchMid.y) / scale;
-    const ratio = newDist / _pinchDist;
-    const MIN_SCALE = Math.min(canvas.clientWidth, canvas.clientHeight) / (EXPORT_GRID * 10);
-    const ns = Math.max(MIN_SCALE, Math.min(40, scale * ratio));
-    if (ns !== scale) {
-      offsetX -= (newMid.x / ns) * ((ns - scale) / scale);
-      offsetY -= (newMid.y / ns) * ((ns - scale) / scale);
-      scale = ns;
-    }
-    _pinchDist = newDist; _pinchMid = newMid;
-    redraw();
-  }
-  return;
+if (_touchDrawing) _cancelTouchStroke();
+_cancelNonBrushGesture();
+_touchWasMulti = true;
+const t0 = e.touches[0], t1 = e.touches[1];
+const dx = t0.pageX - t1.pageX, dy = t0.pageY - t1.pageY;
+const newDist = Math.sqrt(dx*dx + dy*dy);
+const newMid = { x: (t0.pageX + t1.pageX) / 2, y: (t0.pageY + t1.pageY) / 2 };
+if (_pinchDist !== null) {
+if (_pinchImageMode && selectedImageLayerIndex !== null) {
+const layer = layers[selectedImageLayerIndex];
+if (layer && layer.type === "image") {
+const ratio = newDist / _pinchImageInitDist;
+const newLayerScale = Math.max(0.05, _pinchImageInitScale * ratio);
+const curMidTrue = { x: toTrueX(newMid.x), y: toTrueY(newMid.y) };
+const midDeltaX = curMidTrue.x - _pinchImageInitMid.x;
+const midDeltaY = curMidTrue.y - _pinchImageInitMid.y;
+const anchorOffX = _pinchImageInitMid.x - _pinchImageInitX;
+const anchorOffY = _pinchImageInitMid.y - _pinchImageInitY;
+const scaleRatio = newLayerScale / _pinchImageInitScale;
+layer.scale = newLayerScale;
+layer.x = _pinchImageInitMid.x - anchorOffX * scaleRatio + midDeltaX;
+layer.y = _pinchImageInitMid.y - anchorOffY * scaleRatio + midDeltaY;
+_pinchDist = newDist; _pinchMid = newMid;
+redraw();
+}
+} else {
+offsetX += (newMid.x - _pinchMid.x) / scale;
+offsetY += (newMid.y - _pinchMid.y) / scale;
+const ratio = newDist / _pinchDist;
+const MIN_SCALE = Math.min(canvas.clientWidth, canvas.clientHeight) / (EXPORT_GRID * 10);
+const ns = Math.max(MIN_SCALE, Math.min(40, scale * ratio));
+if (ns !== scale) {
+offsetX -= (newMid.x / ns) * ((ns - scale) / scale);
+offsetY -= (newMid.y / ns) * ((ns - scale) / scale);
+scale = ns;
+}
+_pinchDist = newDist; _pinchMid = newMid;
+redraw();
+}
+}
+return;
 }
 if (_touchWasMulti || e.touches.length !== 1) return;
 const t = e.touches[0];
 _cursorMouseX = t.pageX; _cursorMouseY = t.pageY; scheduleCursorDraw();
 if (_touchPasting && pasteGhost) {
-  const tx = toTrueX(t.pageX), ty = toTrueY(t.pageY);
-  pasteGhost.tx = tx - pasteGhost.offX;
-  pasteGhost.ty = ty - pasteGhost.offY;
-  if (!_dirtyRAF) _dirtyRAF = requestAnimationFrame(() => { _dirtyRAF = null; redraw(); });
+const tx = toTrueX(t.pageX), ty = toTrueY(t.pageY);
+pasteGhost.tx = tx - pasteGhost.offX;
+pasteGhost.ty = ty - pasteGhost.offY;
+if (!_dirtyRAF) _dirtyRAF = requestAnimationFrame(() => { _dirtyRAF = null; redraw(); });
 } else if (_touchDrawing) {
-  const tx = toTrueX(t.pageX), ty = toTrueY(t.pageY);
-  _touchDrawSegment(_touchPrevX, _touchPrevY, tx, ty);
-  _touchPrevX = tx; _touchPrevY = ty;
+const tx = toTrueX(t.pageX), ty = toTrueY(t.pageY);
+_touchDrawSegment(_touchPrevX, _touchPrevY, tx, ty);
+_touchPrevX = tx; _touchPrevY = ty;
 } else if (leftDown) {
-  handleMove(t.pageX, t.pageY);
+handleMove(t.pageX, t.pageY);
 }
 }, { passive: false });
 canvas.addEventListener("touchend", e => {
 e.preventDefault();
+_pinchDist = null; _pinchMid = null; _pinchImageMode = false;
 if (e.touches.length === 0) {
-  _pinchDist = null; _pinchMid = null;
-  if (_touchPasting && pasteGhost) {
-    _touchPasting = false;
-    commitPasteGhost();
-  } else if (_touchDrawing) {
-    _endTouchStroke();
-  } else if (leftDown) {
-    const t = e.changedTouches[0];
-    handleUp(t.pageX, t.pageY, true);
-  }
-  _touchWasMulti = false;
-  _cursorMouseX = -999;
-  cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
+if (_touchPasting && pasteGhost) {
+_touchPasting = false;
+commitPasteGhost();
+} else if (_touchDrawing) {
+_endTouchStroke();
+} else if (leftDown) {
+const t = e.changedTouches[0];
+handleUp(t.pageX, t.pageY, true);
+}
+_touchWasMulti = false;
+_cursorMouseX = -999;
+cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
 } else if (e.touches.length === 1) {
-  
-  _pinchDist = null; _pinchMid = null;
-  _touchWasMulti = true; 
+_touchWasMulti = true; 
 }
 }, { passive: false });
 canvas.addEventListener("touchcancel", e => {
-_pinchDist = null; _pinchMid = null;
+_pinchDist = null; _pinchMid = null; _pinchImageMode = false;
 if (_touchDrawing) _cancelTouchStroke();
 _cancelNonBrushGesture(); 
 _touchWasMulti = false;

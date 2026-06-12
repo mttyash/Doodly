@@ -54,7 +54,10 @@ background: transparent; border: none; color: var(--text); cursor: pointer;
 font-size: var(--ui-font-size); display: flex; align-items: center; justify-content: center;
 transition: background var(--trans), color var(--trans); flex-shrink: 0; position: relative;
 }
+.tb-btn:active { background: var(--btn-hover); }
+@media (hover: hover) and (pointer: fine) {
 .tb-btn:hover { background: var(--btn-hover); }
+}
 .tb-btn.active { background: var(--btn-active); color: var(--accent); }
 .tb-btn svg { width: 18px; height: 18px; pointer-events: none; }
 .color-dot-wrap { position: relative; display: flex; align-items: center; }
@@ -64,7 +67,10 @@ background: transparent; border: none; cursor: pointer; flex-shrink: 0;
 display: flex; align-items: center; justify-content: center;
 transition: background var(--trans);
 }
+.color-dot:active { background: var(--btn-hover); }
+@media (hover: hover) and (pointer: fine) {
 .color-dot:hover { background: var(--btn-hover); }
+}
 .color-dot-circle {
 width: 18px; height: 18px; border-radius: 50%;
 pointer-events: none; flex-shrink: 0;
@@ -89,7 +95,10 @@ flex: 1; min-width: 0; height: 100%; cursor: pointer;
 border: none; outline: none; position: relative;
 transition: flex 0.12s ease;
 }
+.strip-swatch:active, .strip-swatch.expanded { flex: 1.6; z-index: 1; }
+@media (hover: hover) and (pointer: fine) {
 .strip-swatch:hover { flex: 1.6; z-index: 1; }
+}
 .strip-swatch:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
 .strip-swatch:last-child{ border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
 #brushSizeWrap { display: flex; align-items: center; padding: 0 2px; }
@@ -145,7 +154,10 @@ background: transparent; border: none; color: var(--text); font-size: var(--ui-f
 line-height: 1; padding: 0; cursor: pointer; display: flex; align-items: center;
 justify-content: center; transition: background var(--trans); flex-shrink: 0;
 }
+#uploadImageLayer:active, #addPaintLayer:active, #layersToggle:active { background: var(--btn-hover); }
+@media (hover: hover) and (pointer: fine) {
 #uploadImageLayer:hover, #addPaintLayer:hover, #layersToggle:hover { background: var(--btn-hover); }
+}
 #layersToggle svg { transition: transform 0.18s ease; }
 #layersPanel.layers-open #layersToggle svg { transform: rotate(180deg); }
 .layer-item {
@@ -170,8 +182,11 @@ background: none; border: none; color: var(--text-dim); font-size: var(--ui-font
 cursor: pointer; display: flex; align-items: center; justify-content: center;
 transition: background var(--trans), color var(--trans);
 }
+.layer-btn:active { background: var(--btn-hover); color: var(--text); }
+@media (hover: hover) and (pointer: fine) {
 .layer-btn:hover { background: var(--btn-hover); color: var(--text); }
 .layer-btn.del:hover { color: var(--accent2); }
+}
 .layer-btn.hidden-btn { opacity: 0.4; }
 .layer-action-btn {
 display: flex; align-items: center; justify-content: center;
@@ -179,8 +194,11 @@ width: 38px; height: 38px; flex-shrink: 0; cursor: pointer;
 border-radius: var(--radius-sm); color: var(--text-dim);
 transition: background var(--trans), color var(--trans);
 }
+.layer-action-btn:active { background: var(--btn-hover); color: var(--text); }
+@media (hover: hover) and (pointer: fine) {
 .layer-action-btn:hover { background: var(--btn-hover); color: var(--text); }
 .layer-action-btn.del-btn:hover { color: var(--accent2); }
+}
 .layer-action-btn.disabled { opacity: 0.2; pointer-events: none; }
 .layer-label-edit {
 flex: 1; font-size: var(--ui-font-size); color: var(--text);
@@ -299,7 +317,7 @@ top: 0; left: 0; width: 100%; height: 100%; display: none;
 </div>
 <div id="brushStripPalette" class="color-strip-palette"></div>
 <div id="bgStripPalette" class="color-strip-palette"></div>
-<canvas id="cursorOverlay" style="position:fixed;inset:0;pointer-events:none;z-index:998;"></canvas>
+
 <div id="polylineIndicator">Click to place end point · Esc to cancel</div>
 <div id="clipboardStatus"></div>
 <div id="layersPanel">
@@ -640,7 +658,6 @@ return tmp;
 function setTool(tool) {
 if (pasteGhost) {
 pasteGhost = null;
-cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
 }
 if (currentTool === "line" && tool !== "line" && polylinePoints.length > 0) {
 polylinePoints = [];
@@ -713,39 +730,52 @@ colors.forEach(col => {
 const s = document.createElement("div");
 s.className = "strip-swatch" + (col === currentColor ? " selected" : "");
 s.style.background = col;
-s.addEventListener("pointerdown", e => {
-e.stopPropagation();
-onPick(col);
-stripEl.querySelectorAll(".strip-swatch").forEach(sw => sw.classList.remove("selected"));
-s.classList.add("selected");
-closeAllDropdowns();
-});
+s.dataset.color = col;
 stripEl.appendChild(s);
 });
+stripEl.addEventListener("pointermove", e => {
+const el = document.elementFromPoint(e.clientX, e.clientY);
+const swatch = el?.closest(".strip-swatch");
+stripEl.querySelectorAll(".strip-swatch").forEach(sw => sw.classList.toggle("expanded", sw === swatch));
+});
+stripEl.addEventListener("pointerleave", () => {
+stripEl.querySelectorAll(".strip-swatch").forEach(sw => sw.classList.remove("expanded"));
+});
+stripEl.addEventListener("pointerup", e => {
+const el = document.elementFromPoint(e.clientX, e.clientY);
+const swatch = el?.closest(".strip-swatch");
+if (!swatch) return;
+e.stopPropagation();
+const col = swatch.dataset.color;
+onPick(col);
+stripEl.querySelectorAll(".strip-swatch").forEach(sw => sw.classList.remove("selected"));
+swatch.classList.add("selected");
+closeAllDropdowns();
+}, { once: false });
 }
 function openStripPalette(stripEl, colors, currentColor, onPick) {
 closeAllDropdowns();
 buildStripPalette(stripEl, colors, currentColor, onPick);
 positionStripPalette(stripEl);
 stripEl.classList.add("open");
-setTimeout(() => document.addEventListener("pointerdown", onOutsideDown), 30);
+setTimeout(() => document.addEventListener("pointerup", onOutsideDown), 30);
 }
 function closeAllDropdowns() {
 document.querySelectorAll(".color-strip-palette.open").forEach(el => el.classList.remove("open"));
-document.removeEventListener("pointerdown", onOutsideDown);
+document.removeEventListener("pointerup", onOutsideDown);
 }
 function onOutsideDown(e) {
 const path = e.composedPath ? e.composedPath() : [];
 if ([...document.querySelectorAll(".color-strip-palette,.color-dot")].some(el => path.includes(el))) return;
 closeAllDropdowns();
 }
-colorDot.onclick = e => {
+colorDot.addEventListener("pointerdown", e => {
 e.stopPropagation();
 const strip = document.getElementById("brushStripPalette");
 if (strip.classList.contains("open")) { closeAllDropdowns(); return; }
 openStripPalette(strip, PALETTE_COLORS, brushColor, col => { brushColor = col; updateColorDot(); });
-};
-bgDot.onclick = e => {
+});
+bgDot.addEventListener("pointerdown", e => {
 e.stopPropagation();
 const strip = document.getElementById("bgStripPalette");
 if (strip.classList.contains("open")) { closeAllDropdowns(); return; }
@@ -754,7 +784,7 @@ bgColor = col;
 document.getElementById("bgCircle").style.background = col;
 redraw();
 });
-};
+});
 function showClipboardStatus(msg) {
 const el = document.getElementById("clipboardStatus");
 el.textContent = msg;
@@ -1695,92 +1725,50 @@ img.src = URL.createObjectURL(f);
 }
 }
 };
-const cursorOverlay = document.getElementById("cursorOverlay");
-const cursorCtx = cursorOverlay.getContext("2d");
-let _cursorMouseX = -999, _cursorMouseY = -999, _cursorRAF = null, _cursorOverUI = false;
-function resizeCursorOverlay() {
-cursorOverlay.width = window.innerWidth;
-cursorOverlay.height = window.innerHeight;
-_paintCursor();
-}
-resizeCursorOverlay();
-window.addEventListener("resize", () => {
-resizeCanvases(); redraw(); resizeCursorOverlay(); updateCropExportOverlay();
-document.querySelectorAll(".color-strip-palette.open").forEach(el => positionStripPalette(el));
-});
 function updateCanvasCursor() {
-if (pasteGhost) {
-canvas.style.cursor = "none";
-document.body.style.cursor = "none";
-return;
-}
-if (selectedImageLayerIndex !== null) {
-canvas.style.cursor = draggingImage ? "grabbing" : "grab";
-document.body.style.cursor = "";
-cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
-return;
-}
+if (pasteGhost) { canvas.style.cursor = document.body.style.cursor = "none"; return; }
+if (selectedImageLayerIndex !== null) { canvas.style.cursor = draggingImage ? "grabbing" : "grab"; document.body.style.cursor = ""; cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height); return; }
 if (currentTool === "brush" || currentTool === "eraser") {
-canvas.style.cursor = "none";
+canvas.style.cursor = "none"; document.body.style.cursor = "";
 } else {
 canvas.style.cursor = ["select","line","rect","circle","cropExport"].includes(currentTool) ? "crosshair" : "default";
-document.body.style.cursor = "";
-cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
+document.body.style.cursor = ""; cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
 }
 }
+const cursorOverlay = document.createElement("canvas");
+cursorOverlay.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:998;";
+document.body.appendChild(cursorOverlay);
+const cursorCtx = cursorOverlay.getContext("2d");
+let _cursorMouseX = -999, _cursorMouseY = -999, _cursorRAF = null;
+function resizeCursorOverlay() { cursorOverlay.width = window.innerWidth; cursorOverlay.height = window.innerHeight; }
+resizeCursorOverlay();
 function _paintCursor() {
 _cursorRAF = null;
 cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
 if (selectedImageLayerIndex !== null) return;
 if (currentTool !== "brush" && currentTool !== "eraser") return;
-if (_cursorMouseX < 0 || _cursorOverUI) return;
+if (_cursorMouseX < 0) return;
 const strokeW = currentTool === "eraser" ? brushSize * 3 : brushSize;
 const r = Math.max(0.5, (strokeW / 2) * scale);
 const haloR = r + Math.min(1, r * 0.5);
-const x = _cursorMouseX, y = _cursorMouseY;
 cursorCtx.save();
-cursorCtx.beginPath();
-cursorCtx.arc(x, y, haloR, 0, Math.PI * 2);
-cursorCtx.strokeStyle = "rgba(0,0,0,0.6)";
-cursorCtx.lineWidth = Math.min(3, r * 1.5);
-cursorCtx.stroke();
-cursorCtx.beginPath();
-cursorCtx.arc(x, y, r, 0, Math.PI * 2);
+cursorCtx.beginPath(); cursorCtx.arc(_cursorMouseX, _cursorMouseY, haloR, 0, Math.PI * 2);
+cursorCtx.strokeStyle = "rgba(0,0,0,0.6)"; cursorCtx.lineWidth = Math.min(3, r * 1.5); cursorCtx.stroke();
+cursorCtx.beginPath(); cursorCtx.arc(_cursorMouseX, _cursorMouseY, r, 0, Math.PI * 2);
 cursorCtx.strokeStyle = currentTool === "eraser" ? "rgba(255,255,255,0.95)" : brushColor;
-cursorCtx.lineWidth = Math.min(1.5, r * 0.75);
-cursorCtx.stroke();
+cursorCtx.lineWidth = Math.min(1.5, r * 0.75); cursorCtx.stroke();
 cursorCtx.restore();
 }
 function scheduleCursorDraw() { if (!_cursorRAF) _cursorRAF = requestAnimationFrame(_paintCursor); }
-function _isUIElement(el) {
-return el?.closest('#toolbar,#layersPanel,#polylineIndicator,#clipboardStatus') !== null;
-}
 window.addEventListener("mousemove", e => {
 _cursorMouseX = e.clientX; _cursorMouseY = e.clientY;
-_cursorOverUI = _isUIElement(e.target);
-if (_cursorOverUI) {
-if (currentTool === "brush" || currentTool === "eraser") { canvas.style.cursor = "none"; document.body.style.cursor = ""; }
-cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
-return;
-}
-if (selectedImageLayerIndex !== null) {
-canvas.style.cursor = draggingImage ? "grabbing" : "grab";
-document.body.style.cursor = "";
-cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
-return;
-}
-if (currentTool === "brush" || currentTool === "eraser") {
-canvas.style.cursor = document.body.style.cursor = "none";
-scheduleCursorDraw();
-}
+if (selectedImageLayerIndex !== null) { canvas.style.cursor = draggingImage ? "grabbing" : "grab"; document.body.style.cursor = ""; cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height); return; }
+if (currentTool === "brush" || currentTool === "eraser") { canvas.style.cursor = document.body.style.cursor = "none"; scheduleCursorDraw(); }
 });
-canvas.addEventListener("pointermove", e => {
-if (e.pointerType === "touch") return;
-_cursorMouseX = e.clientX; _cursorMouseY = e.clientY;
-}, { capture: true, passive: true });
-window.addEventListener("mouseleave", () => {
-_cursorMouseX = -999;
-cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
+window.addEventListener("mouseleave", () => { _cursorMouseX = -999; cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height); });
+window.addEventListener("resize", () => {
+resizeCanvases(); redraw(); resizeCursorOverlay(); updateCropExportOverlay();
+document.querySelectorAll(".color-strip-palette.open").forEach(el => positionStripPalette(el));
 });
 document.addEventListener("keydown", e => {
 if (e.key === "Escape") {
@@ -1840,6 +1828,7 @@ window.addEventListener("resize", positionLayersList);
 let _touchPrevX = null, _touchPrevY = null; 
 let _touchDrawing = false; 
 let _touchWasMulti = false;
+let _touchDotX = null, _touchDotY = null, _touchMoved = false;
 let _touchChunkSnapshots = new Map();
 function _snapshotChunkIfNeeded(layer, cx, cy) {
 const key = cx + "," + cy;
@@ -1875,11 +1864,13 @@ function _cancelTouchStroke() {
 _restoreTouchSnapshots();
 _touchDrawing = false;
 _touchPrevX = _touchPrevY = null;
+_touchDotX = _touchDotY = null; _touchMoved = false;
 _touchChunkSnapshots = new Map();
 }
 function _endTouchStroke() {
 _touchDrawing = false;
 _touchPrevX = _touchPrevY = null;
+_touchDotX = _touchDotY = null; _touchMoved = false;
 _touchChunkSnapshots = new Map();
 }
 function _cancelNonBrushGesture() {
@@ -1937,7 +1928,7 @@ _makePasteGhost(t.pageX, t.pageY);
 } else if ((currentTool === "brush" || currentTool === "eraser") && activePaintLayerIndex !== null) {
 const tx = toTrueX(t.pageX), ty = toTrueY(t.pageY);
 _touchDrawing = true;
-_touchDrawSegment(tx, ty, tx, ty);
+_touchDotX = tx; _touchDotY = ty; _touchMoved = false;
 _touchPrevX = tx; _touchPrevY = ty;
 } else {
 handleDown(t.pageX, t.pageY);
@@ -1991,7 +1982,6 @@ return;
 }
 if (_touchWasMulti || e.touches.length !== 1) return;
 const t = e.touches[0];
-_cursorMouseX = t.pageX; _cursorMouseY = t.pageY; scheduleCursorDraw();
 if (_touchPasting && pasteGhost) {
 const tx = toTrueX(t.pageX), ty = toTrueY(t.pageY);
 pasteGhost.tx = tx - pasteGhost.offX;
@@ -1999,6 +1989,7 @@ pasteGhost.ty = ty - pasteGhost.offY;
 if (!_dirtyRAF) _dirtyRAF = requestAnimationFrame(() => { _dirtyRAF = null; redraw(); });
 } else if (_touchDrawing) {
 const tx = toTrueX(t.pageX), ty = toTrueY(t.pageY);
+_touchMoved = true;
 _touchDrawSegment(_touchPrevX, _touchPrevY, tx, ty);
 _touchPrevX = tx; _touchPrevY = ty;
 } else if (leftDown) {
@@ -2013,14 +2004,15 @@ if (_touchPasting && pasteGhost) {
 _touchPasting = false;
 commitPasteGhost();
 } else if (_touchDrawing) {
+if (!_touchMoved && !_touchWasMulti && _touchDotX !== null) {
+_touchDrawSegment(_touchDotX, _touchDotY, _touchDotX, _touchDotY);
+}
 _endTouchStroke();
 } else if (leftDown) {
 const t = e.changedTouches[0];
 handleUp(t.pageX, t.pageY, true);
 }
 _touchWasMulti = false;
-_cursorMouseX = -999;
-cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
 } else if (e.touches.length === 1) {
 _touchWasMulti = true; 
 }
@@ -2030,9 +2022,11 @@ _pinchDist = null; _pinchMid = null; _pinchImageMode = false;
 if (_touchDrawing) _cancelTouchStroke();
 _cancelNonBrushGesture(); 
 _touchWasMulti = false;
-_cursorMouseX = -999;
-cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
 }, { passive: false });
+document.addEventListener("touchend", e => {
+  const el = e.target.closest(".tb-btn, .color-dot, .layer-action-btn, .layer-btn, #uploadImageLayer, #addPaintLayer, #layersToggle");
+  if (el) { el.blur(); }
+}, { passive: true });
 addPaintLayer("Layer 1");
 setTool("brush");
 updateColorDot();

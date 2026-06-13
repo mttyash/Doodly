@@ -209,8 +209,6 @@ outline: none; min-width: 0; font-family: inherit;
 font-size: var(--ui-font-size); color: var(--text-dim);
 text-align: center; padding: 8px; font-style: italic;
 }
-#polylineIndicator { display: none !important; }
-#clipboardStatus{ display: none !important; }
 #shapePreview {
 position: fixed; pointer-events: none; z-index: 950;
 top: 0; left: 0; width: 100%; height: 100%; display: none;
@@ -318,8 +316,6 @@ top: 0; left: 0; width: 100%; height: 100%; display: none;
 <div id="brushStripPalette" class="color-strip-palette"></div>
 <div id="bgStripPalette" class="color-strip-palette"></div>
 
-<div id="polylineIndicator">Click to place end point · Esc to cancel</div>
-<div id="clipboardStatus"></div>
 <div id="layersPanel">
 <div id="layersPanelHeader">
 <span>Layers</span>
@@ -341,6 +337,7 @@ const canvas = document.getElementById("canvas");
 const ctx= canvas.getContext("2d");
 let _pinchDist = null, _pinchMid = null;
 let _pinchImageMode = false, _pinchImageInitScale = 1, _pinchImageInitX = 0, _pinchImageInitY = 0, _pinchImageInitDist = 1, _pinchImageInitMid = null;
+let _penActive = false;
 const shapePreviewCanvas = document.getElementById("shapePreview");
 const shapeCtx = shapePreviewCanvas.getContext("2d");
 const selectOverlayCanvas= document.getElementById("selectOverlay");
@@ -361,7 +358,7 @@ const PALETTE_COLORS = [
 "#80ff00", "#008000", "#008080", "#00ffff",
 "#0000ff", "#800080", "#ff00ff", "#ff80c0",
 ];
-let brushSizeIdx = 1, brushSize = FIB[1];
+let brushSizeIdx = 0, brushSize = FIB[0];
 let currentTool= "brush";
 let bgColor= "#111113", brushColor = "#ffffff";
 let offsetX = 0, offsetY = 0, scale = 1;
@@ -376,7 +373,7 @@ let selectMoveOffset = { x: 0, y: 0 };
 let selectStart= null, selectDragMode = false, selectDownX = 0, selectDownY = 0;
 let cropExportStart = null, cropExportDragging = false;
 let cropExportDownX = 0, cropExportDownY = 0;
-let cropSelectedCells = [], cropPadIdx = 1, cropIncludeBg = true;
+let cropSelectedCells = [], cropPadIdx = 0, cropIncludeBg = true;
 let pasteGhost = null;
 let floatingSel= null;
 let layers = [], activePaintLayerIndex = null, selectedImageLayerIndex = null;
@@ -526,15 +523,11 @@ if (currentTool === "select") updateSelectOverlay();
 if (currentTool === "cropExport") updateCropExportOverlay();
 if (floatingSel && selectRect) {
 const sx = toScreenX(selectRect.x), sy = toScreenY(selectRect.y);
-ctx.globalAlpha = 0.85;
 ctx.drawImage(floatingSel.tmpCanvas, sx, sy, floatingSel.w * scale, floatingSel.h * scale);
-ctx.globalAlpha = 1;
 }
 if (pasteGhost) {
-ctx.globalAlpha = 0.55;
 ctx.drawImage(pasteGhost.tmpCanvas, toScreenX(pasteGhost.tx), toScreenY(pasteGhost.ty),
 pasteGhost.w * scale, pasteGhost.h * scale);
-ctx.globalAlpha = 1;
 }
 }
 function drawOnActiveLayer(x0, y0, x1, y1, tool, color, size) {
@@ -684,7 +677,6 @@ if (tool !== "line")
 shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
 shapePreviewCanvas.style.display = ["line","rect","circle","select"].includes(tool) ? "block" : "none";
 updateCanvasCursor();
-document.getElementById("polylineIndicator").style.display = "none";
 }
 const DRAWING_TOOL_IDS = ["brushBtn","eraserBtn","lineBtn","rectBtn","circleBtn","selectBtn",
 "sizeUp","sizeDown","colorDot","brushColorWrap"];
@@ -785,13 +777,6 @@ document.getElementById("bgCircle").style.background = col;
 redraw();
 });
 });
-function showClipboardStatus(msg) {
-const el = document.getElementById("clipboardStatus");
-el.textContent = msg;
-el.classList.add("show");
-clearTimeout(el._timer);
-el._timer = setTimeout(() => el.classList.remove("show"), 1800);
-}
 function svgIcon(d, w, h) {
 w = w || 18; h = h || 18;
 return `<svg viewBox="0 0 24 24" width="${w}" height="${h}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -800,7 +785,8 @@ const ICON_UP = svgIcon('<polyline points="18 15 12 9 6 15"/>');
 const ICON_DOWN = svgIcon('<polyline points="6 9 12 15 18 9"/>');
 const ICON_EYE= svgIcon('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>');
 const ICON_EYE_OFF = svgIcon('<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>');
-const ICON_DEL= svgIcon('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>');
+const ICON_DEL= svgIcon('<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>');
+const ICON_CONVERT = svgIcon('<path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>');
 function makeLayerActionBtn(iconHtml, extraClass) {
 const btn = document.createElement("div");
 btn.className = "layer-action-btn" + (extraClass ? " " + extraClass : "");
@@ -898,6 +884,7 @@ nameCell.onclick = e => { e.stopPropagation(); startLayerRename(div, layer, labe
 const upBtn= makeLayerActionBtn(ICON_UP);
 const downBtn = makeLayerActionBtn(ICON_DOWN);
 const visBtn = makeLayerActionBtn(layer.visible ? ICON_EYE : ICON_EYE_OFF);
+const convertBtn = makeLayerActionBtn(ICON_CONVERT);
 const delBtn = makeLayerActionBtn(ICON_DEL, "del-btn");
 if (i >= layers.length - 1) upBtn.classList.add("disabled");
 if (i <= 0)downBtn.classList.add("disabled");
@@ -905,6 +892,61 @@ if (!layer.visible)visBtn.style.opacity = "0.35";
 upBtn.onclick = e => { e.stopPropagation(); moveLayer(i, i + 1); };
 downBtn.onclick = e => { e.stopPropagation(); moveLayer(i, i - 1); };
 visBtn.onclick= e => { e.stopPropagation(); layer.visible = !layer.visible; refreshLayersPanel(); redraw(); };
+convertBtn.onclick = e => {
+e.stopPropagation();
+if (layer.type === "paint") {
+const keys = Object.keys(layer.chunks);
+if (!keys.length) return;
+let minPx = Infinity, minPy = Infinity, maxPx = -Infinity, maxPy = -Infinity;
+keys.forEach(k => {
+const chunk = layer.chunks[k];
+const d = chunk.ctx.getImageData(0, 0, CHUNK_SIZE, CHUNK_SIZE).data;
+for (let py = 0; py < CHUNK_SIZE; py++) {
+for (let px = 0; px < CHUNK_SIZE; px++) {
+if (d[(py * CHUNK_SIZE + px) * 4 + 3] > 0) {
+const tx = chunk.cx * CHUNK_SIZE + px, ty = chunk.cy * CHUNK_SIZE + py;
+if (tx < minPx) minPx = tx; if (tx > maxPx) maxPx = tx;
+if (ty < minPy) minPy = ty; if (ty > maxPy) maxPy = ty;
+}
+}
+}
+});
+if (minPx === Infinity) return;
+const rw = maxPx - minPx + 1, rh = maxPy - minPy + 1;
+const tmp = captureRegionFromLayer(layer, minPx, minPy, rw, rh);
+const img = new Image();
+img.onload = () => {
+layers[i] = { type: "image", name: layer.name, img, x: minPx, y: minPy, scale: 1, visible: layer.visible };
+if (activePaintLayerIndex === i) { activePaintLayerIndex = null; selectedImageLayerIndex = i; }
+refreshLayersPanel(); redraw(); updateToolbarState();
+};
+img.src = tmp.toDataURL();
+} else {
+const paintLayer = createPaintLayer(layer.name);
+const iw = Math.round(layer.img.width * layer.scale);
+const ih = Math.round(layer.img.height * layer.scale);
+const rx = Math.round(layer.x), ry = Math.round(layer.y);
+const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
+const cMaxX = Math.floor((rx + iw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + ih - 1) / CHUNK_SIZE);
+for (let cx = cMinX; cx <= cMaxX; cx++) {
+for (let cy = cMinY; cy <= cMaxY; cy++) {
+const chunk = getOrCreateChunk(paintLayer, cx, cy);
+const dstX = cx * CHUNK_SIZE, dstY = cy * CHUNK_SIZE;
+const drawX = Math.max(0, rx - dstX), drawY = Math.max(0, ry - dstY);
+const srcX = Math.max(0, dstX - rx), srcY = Math.max(0, dstY - ry);
+const copyW = Math.min(iw - srcX, CHUNK_SIZE - drawX);
+const copyH = Math.min(ih - srcY, CHUNK_SIZE - drawY);
+if (copyW > 0 && copyH > 0)
+chunk.ctx.drawImage(layer.img, srcX / layer.scale, srcY / layer.scale,
+copyW / layer.scale, copyH / layer.scale, drawX, drawY, copyW, copyH);
+}
+}
+paintLayer.visible = layer.visible;
+layers[i] = paintLayer;
+if (selectedImageLayerIndex === i) { selectedImageLayerIndex = null; activePaintLayerIndex = i; }
+refreshLayersPanel(); redraw(); updateToolbarState();
+}
+};
 delBtn.onclick= e => {
 e.stopPropagation();
 layers.splice(i, 1);
@@ -914,7 +956,7 @@ if (selectedImageLayerIndex === i) selectedImageLayerIndex = null;
 else if (selectedImageLayerIndex > i)selectedImageLayerIndex--;
 refreshLayersPanel(); redraw();
 };
-div.append(thumbCell, nameCell, upBtn, downBtn, visBtn, delBtn);
+div.append(thumbCell, nameCell, upBtn, downBtn, visBtn, convertBtn, delBtn);
 layersList.appendChild(div);
 }
 updateToolbarState();
@@ -957,7 +999,7 @@ if (_imgLayer) {
 const _iw = _imgLayer.img.width * _imgLayer.scale, _ih = _imgLayer.img.height * _imgLayer.scale;
 if (tx >= _imgLayer.x && tx <= _imgLayer.x + _iw && ty >= _imgLayer.y && ty <= _imgLayer.y + _ih) {
 draggingImage = true;
-dragOffset = { x: tx - _imgLayer.x, y: ty - _imgLayer.y };
+dragOffset = { x: Math.round(tx - _imgLayer.x), y: Math.round(ty - _imgLayer.y) };
 imageDragStart = { index: selectedImageLayerIndex, fromX: _imgLayer.x, fromY: _imgLayer.y };
 canvas.style.cursor = "grabbing";
 return;
@@ -977,33 +1019,8 @@ if (currentTool === "select") {
 if (selectRect && tx >= selectRect.x && tx <= selectRect.x + selectRect.w &&
 ty >= selectRect.y && ty <= selectRect.y + selectRect.h) {
 selectMoving = true;
-selectMoveOffset = { x: tx - selectRect.x, y: ty - selectRect.y };
-if (activePaintLayerIndex !== null) {
-const layer = layers[activePaintLayerIndex];
-if (layer && layer.type === "paint") {
-if (!floatingSel) captureSelectionPixels();
-if (floatingSel && !floatingSel.erased) {
-floatingSel.erased = true;
-const rx = floatingSel.origX, ry = floatingSel.origY;
-const rw = floatingSel.w, rh = floatingSel.h;
-const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
-const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
-for (let cx = cMinX; cx <= cMaxX; cx++) {
-for (let cy = cMinY; cy <= cMaxY; cy++) {
-const key = chunkKey(cx, cy);
-if (!layer.chunks[key]) continue;
-const lctx = layer.chunks[key].ctx;
-const srcX = Math.max(0, rx - cx * CHUNK_SIZE);
-const srcY = Math.max(0, ry - cy * CHUNK_SIZE);
-const eraseW = Math.min(CHUNK_SIZE - srcX, rw - (cx * CHUNK_SIZE + srcX - rx));
-const eraseH = Math.min(CHUNK_SIZE - srcY, rh - (cy * CHUNK_SIZE + srcY - ry));
-if (eraseW > 0 && eraseH > 0) lctx.clearRect(srcX, srcY, eraseW, eraseH);
-}
-}
-redraw();
-}
-}
-}
+selectMoveOffset = { x: Math.round(tx - selectRect.x), y: Math.round(ty - selectRect.y) };
+if (!floatingSel) { captureSelectionPixels(); eraseSelectionFromLayer(); }
 } else if (!selectStart) {
 if (floatingSel) commitFloatingSel();
 selectRect = null;
@@ -1013,13 +1030,13 @@ selectDragMode = false;
 selectDownX = cursorX; selectDownY = cursorY;
 drawDottedRectPreview(cursorX, cursorY, cursorX, cursorY);
 } else {
-const tx0 = Math.min(selectStart.x, tx), ty0 = Math.min(selectStart.y, ty);
-const tx1 = Math.max(selectStart.x, tx), ty1 = Math.max(selectStart.y, ty);
+const tx0 = Math.round(Math.min(selectStart.x, tx)), ty0 = Math.round(Math.min(selectStart.y, ty));
+const tx1 = Math.round(Math.max(selectStart.x, tx)), ty1 = Math.round(Math.max(selectStart.y, ty));
 selectRect = (tx1 - tx0 > 2 && ty1 - ty0 > 2) ? { x: tx0, y: ty0, w: tx1 - tx0, h: ty1 - ty0 } : null;
 selectStart = null; selectDragMode = false;
 shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
 updateSelectOverlay();
-if (selectRect) { captureSelectionPixels(); trimSelectionToContent(); }
+if (selectRect) { captureSelectionPixels(); trimSelectionToContent(); eraseSelectionFromLayer(); redraw(); }
 updateClipboardBtns();
 }
 return;
@@ -1029,14 +1046,12 @@ if (activePaintLayerIndex === null) return;
 if (!polylinePoints.length) {
 polylinePoints.push({ x: tx, y: ty });
 shapeDragMode = false; shapeDownX = cursorX; shapeDownY = cursorY;
-document.getElementById("polylineIndicator").style.display = "block";
 drawPolylinePreview(cursorX, cursorY);
 } else {
 const start = polylinePoints[0];
 const layer = layers[activePaintLayerIndex];
 if (layer?.type === "paint") drawShapeOnLayer(layer, "line", start.x, start.y, tx, ty, brushColor, brushSize, null);
 polylinePoints = []; shapeDragMode = false;
-document.getElementById("polylineIndicator").style.display = "none";
 shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
 redraw();
 }
@@ -1083,7 +1098,7 @@ if ((currentTool === "line" && polylinePoints.length > 0) ||
 }
 if (leftDown && currentTool === "select") {
 if (selectMoving && selectRect) {
-selectRect = { x: tx - selectMoveOffset.x, y: ty - selectMoveOffset.y, w: selectRect.w, h: selectRect.h };
+selectRect = { x: Math.round(tx - selectMoveOffset.x), y: Math.round(ty - selectMoveOffset.y), w: selectRect.w, h: selectRect.h };
 updateSelectOverlay(); redraw();
 prevX = cursorX; prevY = cursorY; return;
 }
@@ -1103,7 +1118,7 @@ updateSelectOverlay(); prevX = cursorX; prevY = cursorY; return;
 }
 if (draggingImage && selectedImageLayerIndex !== null) {
 const layer = layers[selectedImageLayerIndex];
-if (layer) { layer.x = tx - dragOffset.x; layer.y = ty - dragOffset.y; }
+if (layer) { layer.x = Math.round(tx - dragOffset.x); layer.y = Math.round(ty - dragOffset.y); }
 if (!_imageDragRAF) _imageDragRAF = requestAnimationFrame(() => { _imageDragRAF = null; refreshLayersPanel(); redraw(); });
 prevX = cursorX; prevY = cursorY; return;
 }
@@ -1131,7 +1146,6 @@ const layer = layers[activePaintLayerIndex];
 if (layer?.type === "paint")
 drawShapeOnLayer(layer, "line", polylinePoints[0].x, polylinePoints[0].y, tx, ty, brushColor, brushSize, null);
 polylinePoints = []; shapeDragMode = false;
-document.getElementById("polylineIndicator").style.display = "none";
 shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
 redraw();
 } else if (["rect","circle"].includes(currentTool) && shapeStart && activePaintLayerIndex !== null) {
@@ -1158,13 +1172,13 @@ if (selectStart) {
 const movedEnough = selectDragMode ||
 (isTouch && (Math.abs(cursorX - selectDownX) > 2 || Math.abs(cursorY - selectDownY) > 2));
 if (movedEnough) {
-const tx0 = Math.min(selectStart.x, tx), ty0 = Math.min(selectStart.y, ty);
-const tx1 = Math.max(selectStart.x, tx), ty1 = Math.max(selectStart.y, ty);
+const tx0 = Math.round(Math.min(selectStart.x, tx)), ty0 = Math.round(Math.min(selectStart.y, ty));
+const tx1 = Math.round(Math.max(selectStart.x, tx)), ty1 = Math.round(Math.max(selectStart.y, ty));
 selectRect = (tx1 - tx0 > 2 && ty1 - ty0 > 2) ? { x: tx0, y: ty0, w: tx1 - tx0, h: ty1 - ty0 } : null;
 selectStart = null; selectDragMode = false;
 shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
 updateSelectOverlay();
-if (selectRect) { captureSelectionPixels(); trimSelectionToContent(); }
+if (selectRect) { captureSelectionPixels(); trimSelectionToContent(); eraseSelectionFromLayer(); }
 redraw();
 }
 } else if (!selectRect || (!wasMoving && selectRect.w < 2 && selectRect.h < 2)) {
@@ -1189,7 +1203,8 @@ cropExportStart = null; cropExportDragging = false;
 }
 }
 canvas.addEventListener("pointerdown", e => {
-if (e.pointerType === "touch") return; 
+if (e.pointerType === "touch") return;
+if (e.pointerType === "pen") _penActive = true;
 if (activePointerId !== null && activePointerId !== e.pointerId) activePointerId = null;
 activePointerId = e.pointerId;
 canvas.setPointerCapture?.(e.pointerId);
@@ -1238,6 +1253,7 @@ handleMove(e.pageX, e.pageY);
 }, { passive: true });
 canvas.addEventListener("pointerup", e => {
 if (activePointerId !== e.pointerId) return;
+if (e.pointerType === "pen") _penActive = false;
 if (e.button === 1) { middleDown = false; }
 handleUp(e.pageX, e.pageY, false);
 try { canvas.releasePointerCapture?.(e.pointerId); } catch {}
@@ -1270,10 +1286,11 @@ canvas.style.cursor = inSel ? "move" : "crosshair";
 });
 function resetInteractionState() {
 activePointerId = null; leftDown = false; middleDown = false;
+_penActive = false;
 draggingImage = false; shapeStart = null; currentStroke = null;
 shapeDragMode = false; polylinePoints = [];
 selectMoving = false; selectDragStart = null; selectStart = null; selectDragMode = false;
-if (floatingSel) commitFloatingSel();
+if (floatingSel) cancelFloatingSel();
 cropExportStart = null; cropExportDragging = false;
 shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
 }
@@ -1292,9 +1309,19 @@ const iw = layer.img.width * layer.scale, ih = layer.img.height * layer.scale;
 const hoveringImage = mx >= layer.x && mx <= layer.x + iw && my >= layer.y && my <= layer.y + ih;
 if (hoveringImage) {
 const center = { x: layer.x + iw / 2, y: layer.y + ih / 2 };
-layer.scale = Math.max(0.05, layer.scale + (e.deltaY < 0 ? 0.1 : -0.1));
-layer.x = center.x - (layer.img.width * layer.scale) / 2;
-layer.y = center.y - (layer.img.height * layer.scale) / 2;
+const growing = e.deltaY < 0;
+const curW = layer.img.width * layer.scale;
+const curH = layer.img.height * layer.scale;
+const step = Math.max(2, Math.round(Math.max(curW, curH) / 100));
+const newW = Math.max(1, Math.round(curW + (growing ? step : -step)));
+const newH = Math.max(1, Math.round(curH + (growing ? step : -step)));
+let newScale = newW / layer.img.width;
+const crossingOriginal = (growing && layer.scale < 1 && newScale >= 1) ||
+(!growing && layer.scale > 1 && newScale <= 1);
+if (crossingOriginal) newScale = 1;
+layer.scale = Math.max(0.01, newScale);
+layer.x = Math.round(center.x - (layer.img.width * layer.scale) / 2);
+layer.y = Math.round(center.y - (layer.img.height * layer.scale) / 2);
 redraw(); return;
 }
 }
@@ -1465,6 +1492,28 @@ tc.drawImage(chunk.canvas, srcX, srcY, copyW, copyH, dstX, dstY, copyW, copyH);
 }
 floatingSel = { tmpCanvas: tmp, w: rw, h: rh, origX: rx, origY: ry, captured: true };
 }
+function eraseSelectionFromLayer() {
+if (!floatingSel || activePaintLayerIndex === null) return;
+const layer = layers[activePaintLayerIndex];
+if (!layer || layer.type !== "paint") return;
+const rx = floatingSel.origX, ry = floatingSel.origY;
+const rw = floatingSel.w, rh = floatingSel.h;
+const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
+const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
+for (let cx = cMinX; cx <= cMaxX; cx++) {
+for (let cy = cMinY; cy <= cMaxY; cy++) {
+const key = chunkKey(cx, cy);
+if (!layer.chunks[key]) continue;
+const lctx = layer.chunks[key].ctx;
+const srcX = Math.max(0, rx - cx * CHUNK_SIZE);
+const srcY = Math.max(0, ry - cy * CHUNK_SIZE);
+const eraseW = Math.min(CHUNK_SIZE - srcX, rw - (cx * CHUNK_SIZE + srcX - rx));
+const eraseH = Math.min(CHUNK_SIZE - srcY, rh - (cy * CHUNK_SIZE + srcY - ry));
+if (eraseW > 0 && eraseH > 0) lctx.clearRect(srcX, srcY, eraseW, eraseH);
+}
+}
+invalidateLayerThumb(layer);
+}
 function trimSelectionToContent() {
 if (!floatingSel || !selectRect) return;
 const { tmpCanvas, w, h, origX, origY } = floatingSel;
@@ -1489,7 +1538,7 @@ trimmed.getContext("2d").drawImage(tmpCanvas, minX, minY, newW, newH, 0, 0, newW
 floatingSel.tmpCanvas = trimmed;
 floatingSel.w = newW; floatingSel.h = newH;
 floatingSel.origX = origX + minX; floatingSel.origY = origY + minY;
-selectRect = { x: selectRect.x + minX, y: selectRect.y + minY, w: newW, h: newH };
+selectRect = { x: floatingSel.origX, y: floatingSel.origY, w: newW, h: newH };
 updateSelectOverlay();
 }
 function selectCopy() {
@@ -1498,8 +1547,8 @@ captureSelectionPixels();
 if (!floatingSel) return;
 const rw = floatingSel.w, rh = floatingSel.h;
 clipboard = { imageData: floatingSel.tmpCanvas.getContext("2d").getImageData(0, 0, rw, rh), x: Math.round(selectRect.x), y: Math.round(selectRect.y), w: rw, h: rh };
-showClipboardStatus("Copied selection");
-floatingSel = null; selectRect = null;
+commitFloatingSel();
+selectRect = null;
 updateSelectOverlay(); updateClipboardBtns();
 }
 function selectCut() {
@@ -1528,7 +1577,6 @@ if (eraseW > 0 && eraseH > 0) lctx.clearRect(srcX, srcY, eraseW, eraseH);
 floatingSel = null; selectRect = null;
 updateSelectOverlay(); updateClipboardBtns();
 refreshLayersPanel(); redraw();
-showClipboardStatus("Cut selection");
 }
 let _pendingPaste = false; 
 let _touchPasting = false; 
@@ -1545,11 +1593,10 @@ canvas.style.cursor = "none";
 redraw();
 }
 function selectPaste() {
-if (!clipboard) { showClipboardStatus("Clipboard empty"); return; }
+if (!clipboard) return;
 if (window.matchMedia("(pointer: coarse)").matches) {
 _pendingPaste = true; _touchPasting = false;
 pasteGhost = null;
-showClipboardStatus("Tap canvas to place");
 return;
 }
 _makePasteGhost(cursorX, cursorY);
@@ -1562,8 +1609,7 @@ const top = layers.map((l, i) => ({ l, i })).filter(x => x.l.type === "paint").p
 if (top) targetIdx = top.i;
 }
 if (targetIdx === null || !layers[targetIdx] || layers[targetIdx].type !== "paint") {
-pasteGhost = null; canvas.style.cursor = "default";
-showClipboardStatus("No paint layer active"); return;
+pasteGhost = null; canvas.style.cursor = "default"; return;
 }
 const targetLayer = layers[targetIdx];
 const rx = Math.round(pasteGhost.tx), ry = Math.round(pasteGhost.ty);
@@ -1587,7 +1633,32 @@ pasteGhost = null;
 canvas.style.cursor = currentTool === "select" ? "crosshair" : "default";
 activePaintLayerIndex = targetIdx; selectedImageLayerIndex = null;
 refreshLayersPanel(); redraw(); updateClipboardBtns();
-showClipboardStatus("Pasted");
+}
+function cancelFloatingSel() {
+if (!floatingSel) return;
+if (activePaintLayerIndex === null) { floatingSel = null; return; }
+const layer = layers[activePaintLayerIndex];
+if (!layer || layer.type !== "paint") { floatingSel = null; return; }
+const rx = floatingSel.origX, ry = floatingSel.origY;
+const rw = floatingSel.w, rh = floatingSel.h;
+const cMinX = Math.floor(rx / CHUNK_SIZE), cMinY = Math.floor(ry / CHUNK_SIZE);
+const cMaxX = Math.floor((rx + rw - 1) / CHUNK_SIZE), cMaxY = Math.floor((ry + rh - 1) / CHUNK_SIZE);
+for (let cx = cMinX; cx <= cMaxX; cx++) {
+for (let cy = cMinY; cy <= cMaxY; cy++) {
+const chunk = getOrCreateChunk(layer, cx, cy);
+const lctx = chunk.ctx;
+const dstX = cx * CHUNK_SIZE, dstY = cy * CHUNK_SIZE;
+const srcX = Math.max(0, dstX - rx), srcY = Math.max(0, dstY - ry);
+const drawX = Math.max(0, rx - dstX), drawY = Math.max(0, ry - dstY);
+const copyW = Math.min(rw - srcX, CHUNK_SIZE - drawX);
+const copyH = Math.min(rh - srcY, CHUNK_SIZE - drawY);
+if (copyW > 0 && copyH > 0)
+lctx.drawImage(floatingSel.tmpCanvas, srcX, srcY, copyW, copyH, drawX, drawY, copyW, copyH);
+}
+}
+floatingSel = null;
+invalidateLayerThumb(layer);
+refreshLayersPanel(); redraw();
 }
 function commitFloatingSel() {
 if (!floatingSel || !selectRect) { floatingSel = null; return; }
@@ -1753,13 +1824,13 @@ img.src = URL.createObjectURL(f);
 }
 };
 function updateCanvasCursor() {
-if (pasteGhost) { canvas.style.cursor = document.body.style.cursor = "none"; return; }
-if (selectedImageLayerIndex !== null) { canvas.style.cursor = draggingImage ? "grabbing" : "grab"; document.body.style.cursor = ""; cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height); return; }
+if (pasteGhost) { canvas.style.cursor = "none"; return; }
+if (selectedImageLayerIndex !== null) { canvas.style.cursor = draggingImage ? "grabbing" : "grab"; cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height); return; }
 if (currentTool === "brush" || currentTool === "eraser") {
-canvas.style.cursor = "none"; document.body.style.cursor = "";
+canvas.style.cursor = "none";
 } else {
 canvas.style.cursor = ["select","line","rect","circle","cropExport"].includes(currentTool) ? "crosshair" : "default";
-document.body.style.cursor = ""; cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
+cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
 }
 }
 const cursorOverlay = document.createElement("canvas");
@@ -1767,11 +1838,13 @@ cursorOverlay.style.cssText = "position:fixed;inset:0;pointer-events:none;z-inde
 document.body.appendChild(cursorOverlay);
 const cursorCtx = cursorOverlay.getContext("2d");
 let _cursorMouseX = -999, _cursorMouseY = -999, _cursorRAF = null;
+let _mouseOverCanvas = false;
 function resizeCursorOverlay() { cursorOverlay.width = window.innerWidth; cursorOverlay.height = window.innerHeight; }
 resizeCursorOverlay();
 function _paintCursor() {
 _cursorRAF = null;
 cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
+if (!_mouseOverCanvas) return;
 if (selectedImageLayerIndex !== null) return;
 if (currentTool !== "brush" && currentTool !== "eraser") return;
 if (_cursorMouseX < 0) return;
@@ -1789,10 +1862,15 @@ cursorCtx.restore();
 function scheduleCursorDraw() { if (!_cursorRAF) _cursorRAF = requestAnimationFrame(_paintCursor); }
 window.addEventListener("mousemove", e => {
 _cursorMouseX = e.clientX; _cursorMouseY = e.clientY;
-if (selectedImageLayerIndex !== null) { canvas.style.cursor = draggingImage ? "grabbing" : "grab"; document.body.style.cursor = ""; cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height); return; }
-if (currentTool === "brush" || currentTool === "eraser") { canvas.style.cursor = document.body.style.cursor = "none"; scheduleCursorDraw(); }
+const overCanvas = e.target === canvas;
+if (overCanvas !== _mouseOverCanvas) {
+_mouseOverCanvas = overCanvas;
+if (!overCanvas) cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height);
+}
+if (selectedImageLayerIndex !== null) { canvas.style.cursor = draggingImage ? "grabbing" : "grab"; return; }
+if (currentTool === "brush" || currentTool === "eraser") { scheduleCursorDraw(); }
 });
-window.addEventListener("mouseleave", () => { _cursorMouseX = -999; cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height); });
+window.addEventListener("mouseleave", () => { _cursorMouseX = -999; _mouseOverCanvas = false; cursorCtx.clearRect(0, 0, cursorOverlay.width, cursorOverlay.height); });
 window.addEventListener("resize", () => {
 resizeCanvases(); redraw(); resizeCursorOverlay(); updateCropExportOverlay();
 document.querySelectorAll(".color-strip-palette.open").forEach(el => positionStripPalette(el));
@@ -1806,13 +1884,12 @@ pasteGhost = null;
 canvas.style.cursor = currentTool === "select" ? "crosshair" : "default";
 redraw(); return;
 }
-if (floatingSel) { commitFloatingSel(); selectRect = null; updateSelectOverlay(); updateClipboardBtns(); return; }
+if (floatingSel) { cancelFloatingSel(); selectRect = null; updateSelectOverlay(); updateClipboardBtns(); return; }
 if (currentTool === "cropExport") { resetCropExport(); return; }
 shapeStart = null; shapeDragMode = false;
 shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
 if (currentTool === "line") {
 polylinePoints = []; shapeDragMode = false;
-document.getElementById("polylineIndicator").style.display = "none";
 }
 if (currentTool === "select") {
 selectRect = selectDragStart = selectStart = null; selectDragMode = false;
@@ -1909,7 +1986,6 @@ if (!leftDown) return;
 leftDown = false;
 shapeStart = null; shapeDragMode = false;
 polylinePoints = [];
-document.getElementById("polylineIndicator").style.display = "none";
 shapeCtx.clearRect(0, 0, shapePreviewCanvas.width, shapePreviewCanvas.height);
 selectStart = null; selectDragMode = false; selectMoving = false;
 updateSelectOverlay();
@@ -1919,6 +1995,7 @@ updateCropExportOverlay?.();
 }
 canvas.addEventListener("touchstart", e => {
 e.preventDefault();
+if (_penActive) return;
 if (e.touches.length > 1) {
 if (_touchDrawing) _cancelTouchStroke();
 _cancelNonBrushGesture();
@@ -1964,6 +2041,7 @@ handleDown(t.pageX, t.pageY);
 }, { passive: false });
 canvas.addEventListener("touchmove", e => {
 e.preventDefault();
+if (_penActive) return;
 if (e.touches.length >= 2) {
 if (_touchDrawing) _cancelTouchStroke();
 _cancelNonBrushGesture();
@@ -2025,6 +2103,7 @@ handleMove(t.pageX, t.pageY);
 }, { passive: false });
 canvas.addEventListener("touchend", e => {
 e.preventDefault();
+if (_penActive) return;
 _pinchDist = null; _pinchMid = null; _pinchImageMode = false;
 if (e.touches.length === 0) {
 if (_touchPasting && pasteGhost) {
@@ -2045,6 +2124,7 @@ _touchWasMulti = true;
 }
 }, { passive: false });
 canvas.addEventListener("touchcancel", e => {
+if (_penActive) return;
 _pinchDist = null; _pinchMid = null; _pinchImageMode = false;
 if (_touchDrawing) _cancelTouchStroke();
 _cancelNonBrushGesture(); 
